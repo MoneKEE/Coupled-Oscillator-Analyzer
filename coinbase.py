@@ -1,5 +1,5 @@
 '''
-tsting
+testing
 
 '''
 import cbpro
