@@ -12,10 +12,14 @@ from cmath import phase
 import matplotlib.pyplot as plt
 import matplotlib.dates as mpdates
 import math as mt
+import inspect
+import progressbar
+import time
 pd.plotting.register_matplotlib_converters()
 #import talib
 
 def plot_fft(data,comp,fft_col,p_col='close',Fs=1):
+
     mask_1 = data.fft_freq > 0
     mask_2 = np.abs(data['fft'][mask_1]) > np.std(np.abs(data['fft'][mask_1])) * 4
 
@@ -117,6 +121,7 @@ def plot_positions(data,comp,buy_signals,sell_signals,fft_col='close_1d'):
         plt.draw()
 
 def get_data_span(asset,start,stop,interval):
+
     pc      = cbpro.PublicClient()
     data    = pd.DataFrame()
 
@@ -167,7 +172,8 @@ def get_data_span(asset,start,stop,interval):
 
     return data.drop_duplicates()
 
-def get_fft(data,Fs,fft_col='close_1d',n_harms=10):
+def get_fft(data,Fs,fft_col='close_1d'):
+
     print(f'- Deriving Fourier Transform...\n')
 
     close_fft       = np.fft.fft(np.asarray(data[fft_col].tolist()))
@@ -183,6 +189,7 @@ def get_fft(data,Fs,fft_col='close_1d',n_harms=10):
     return data
 
 def get_harms(data,f_list):
+
     print('- Finding Harmonics...\n')
 
     comp = []
@@ -195,7 +202,16 @@ def get_harms(data,f_list):
     return comp
 
 def get_ifft(data,comp):
-    print('- Determining component sinusoids and extracting desired harmonics...\n')
+
+    curframe = inspect.currentframe()
+    calframe = inspect.getouterframes(curframe, 2)
+
+    # Skip printing this message if called by harmonic sweeper
+    if calframe[1][3] != 'harmonic_sweep':
+        print('- Determining component sinusoids and extracting desired harmonics...\n')
+    else:
+        pass
+
     fft_list = np.asarray(data.fft.tolist())
 
     data['ifft'] = np.real(np.fft.ifft(np.copy(fft_list)))
@@ -212,28 +228,8 @@ def get_ifft(data,comp):
 
     return data
 
-def returns(data):
-    # Hold returns are calculated by finding the value of the log of the ratio between the current close and the previous
-    # close.
-    # Strategy returns are found by 
-
-    print('- Calculating returns...\n')
-
-    data['hold']        = np.log(data.close/data.close.shift(1))
-    data['ideal']       = data.id_position * data.hold
-    data['strategy']    = data.position * data.hold
-
-    results = np.exp(data[['hold','strategy','ideal']].sum())-1
-    #n_days = (data.index[-1] - data.index[0]).days
-    #returns_ann = 365/n_days * returns
-
-    data.fillna(0,inplace=True)
-
-    print_results(data=results)
-
-    return data, results
-
 def positions(data,signal,cross,fft_col,bt=False):
+
     print('- Determining ideal and strategy positions...\n')
 
     try:
@@ -277,24 +273,29 @@ def positions(data,signal,cross,fft_col,bt=False):
 
     return data, buy_signals, sell_signals, id_buy_signals, id_sell_signals
 
-def benchmark(data,comp,fft_col='close_1d'):
-    t_results = []
-    for i in comp:
-        for j in comp:
-            data, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data,signal=i,cross=j,fft_col=fft_col)
-            data,results = returns(data)
-            if i != j:
-                t_results.append([i
-                                ,j
-                                ,results['strategy']
-                                ,results['hold']
-                                ,results['ideal']])
+def returns(data):
+    # Hold returns are calculated by finding the value of the log of the ratio between the current close and the previous
+    # close.
+    # Strategy returns are found by 
 
-    final_res = pd.DataFrame(t_results,columns=['signal','cross','strategy','hold','ideal'])
+    print('- Calculating returns...\n')
 
-    return final_res
+    data['hold']        = np.log(data.close/data.close.shift(1))
+    data['ideal']       = data.id_position * data.hold
+    data['strategy']    = data.position * data.hold
+
+    results = np.exp(data[['hold','strategy','ideal']].sum())-1
+    #n_days = (data.index[-1] - data.index[0]).days
+    #returns_ann = 365/n_days * returns
+
+    data.fillna(0,inplace=True)
+
+    print_results(data=results)
+
+    return data, results
 
 def optimize(data,fft_col,results):
+
     idx = results['strategy'].values.argmax()
     s_res = results.iloc[idx,:3]
     h_res = results['hold'][0]
@@ -328,6 +329,7 @@ def optimize(data,fft_col,results):
     return data,buy_signals, sell_signals, id_buy_signals, id_sell_signals, results
 
 def process_data_for_labels_past(data,hm_days=1):
+
     print('- Processing data for past features...\n')
 
     for i in range(1,hm_days+1):
@@ -344,10 +346,12 @@ def process_data_for_labels_past(data,hm_days=1):
     return data
 
 def resume_run(inc):
+
     plt.pause(inc)
     plt.clf()
 
 def mean_squared_error(data,comp,fft_col):
+
     h_list = ['ifft_'+str(x) for x in comp]
     ifft_sum = data[h_list].sum(axis=1)
     signal = data[fft_col]
@@ -356,6 +360,7 @@ def mean_squared_error(data,comp,fft_col):
     return val
 
 def print_results(data):
+
     result = pd.DataFrame([round(data.strategy*100,2),round(data.ideal*100,2),round(data.hold*100,2)]
                             ,index=['Strategy','Ideal','Hold']
                             ,columns=['Return %']
@@ -363,26 +368,56 @@ def print_results(data):
 
     print('\n','Projected Returns')
     print('-'*30)
-    print(result)
+    print(result,'\n')
 
-def calc_stats(data,wnd):
-    stats = pd.DataFrame()
+def calc_stats(data,windows,fft_col):
 
-    stats['std'] = data['close_1d'].rolling(wnd).std()
-    stats['mean'] = data['close_1d'].rolling(wnd).mean()
-    stats['median'] = data['close_1d'].rolling(wnd).median()
-    stats['min'] = data['close_1d'].rolling(wnd).min()
-    stats['max'] = data['close_1d'].rolling(wnd).max()
+    for i in windows:
+        data[f'sum_{i}'] = data[fft_col].rolling(i).sum()
+        data[f'std_{i}'] = data[fft_col].rolling(i).std()
+        data[f'mean_{i}'] = data[fft_col].rolling(i).mean()
+        data[f'median_{i}'] = data[fft_col].rolling(i).median()
+        data[f'min_{i}'] = data[fft_col].rolling(i).min()
+        data[f'max_{i}'] = data[fft_col].rolling(i).max()
 
-    stats['7_std'] = data['close_1d'].rolling(wnd*7).std()
-    stats['7_mean'] = data['close_1d'].rolling(wnd*7).mean()
-    stats['7_median'] = data['close_1d'].rolling(wnd*7).median()
-    stats['7_min'] = data['close_1d'].rolling(wnd*7).min()
-    stats['7_max'] = data['close_1d'].rolling(wnd*7).max()
+    return data
 
-    return stats
+def progress_bar(x,load_text):
+      
+    widgets = [f'{load_text}: ', progressbar.AnimatedMarker(),' [',
+         progressbar.Timer(),
+         '] ',
+           progressbar.Bar('*'),' (',
+           progressbar.ETA(), ') ',
+          ]
+    bar = progressbar.ProgressBar(widgets=widgets,maxval=x).start()
+      
+    return bar
+
+def harmonic_sweep(data,h_rng,Fs,hm_days,fft_col='close_1d'):
+
+    results= []
+    load_text = 'Sweeping'
+
+    data_h = data.copy()
+    data_h  = process_data_for_labels_past(data=data_h,hm_days=hm_days)
+    data_h  = get_fft(data=data_h,fft_col=fft_col,Fs=Fs)
+
+    bar = progress_bar(x=len(h_rng),load_text=load_text)
+
+    for i,chord in enumerate(h_rng):
+        bar.update(i)
+        data_h  = get_ifft(data=data_h,comp=chord)
+        chord_mse = mean_squared_error(data_h,chord,fft_col=fft_col)
+
+        results.append([chord,chord_mse])
+        labels = ['ifft_' + str(x) for x in chord]
+        data_h.drop(labels = labels,axis=1,inplace=True)
+        
+    bar.finish()
+    return data_h, pd.DataFrame(results,columns=['chord','chord_mse'])
     
-def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt):
+def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt,windows):
     # At the start it is assumed that 
     # N days have already been processed
     N = 24*7
@@ -399,22 +434,22 @@ def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt):
             break
 
         data_inc  = process_data_for_labels_past(data=data_inc,hm_days=hm_days)
-        data_inc  = get_fft(data=data_inc,fft_col=fft_col,n_harms=harms,Fs=Fs)
+        data_inc  = get_fft(data=data_inc,fft_col=fft_col,Fs=Fs)
         data_inc  = get_ifft(data=data_inc,comp=comp)
 
         data_inc, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data_inc,signal=comp[-1],cross=comp[0],fft_col=fft_col,bt=bt)
         data_inc, results = returns(data=data_inc)
 
-        stats = calc_stats(data_inc,wnd=24)
+        stats = calc_stats(data_inc,fft_col=fft_col,wnd=24)
 
         buys        = data_inc[buy_signals]
         sells       = data_inc[sell_signals]
         id_buys     = data_inc[id_buy_signals]
         id_sells    = data_inc[id_sell_signals]
 
-        # plot_time_series(data_inc)
+        plot_time_series(data_inc)
         plot_fft(data_inc,Fs=Fs,comp=comp,fft_col=fft_col)
-        #plot_positions(data_inc,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
+        plot_positions(data_inc,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
 
         if t == len(data_inc):
             plt.show()
@@ -423,11 +458,12 @@ def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt):
 
     return data_inc, stats
     
-def dump(data,comp,hm_days,fft_col,harms,Fs):
+def dump(data,comp,hm_days,fft_col,harms,Fs,windows):
+
     stats = pd.DataFrame()
     data_d = process_data_for_labels_past(data=data,hm_days=hm_days)
 
-    data_d           = get_fft(data=data_d,fft_col=fft_col,n_harms=harms,Fs=Fs)
+    data_d           = get_fft(data=data_d,fft_col=fft_col,Fs=Fs)
     data_d           = get_ifft(data=data_d,comp=comp)
 
     data_d, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data_d,signal=comp[-1],cross=comp[0],fft_col=fft_col)
@@ -438,7 +474,7 @@ def dump(data,comp,hm_days,fft_col,harms,Fs):
     id_buys     = data_d[id_buy_signals]
     id_sells    = data_d[id_sell_signals]
 
-    stats = calc_stats(data_d,wnd=24)
+    stats = calc_stats(data_d,fft_col=fft_col,windows=windows)
 
     plot_positions(data=data_d,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
     plot_fft(data=data_d,Fs=Fs,comp=comp,fft_col=fft_col)
@@ -455,7 +491,7 @@ def main():
     #################
     # PARAMETERS
     #################
-    harms       = 5
+    harms       = 3
     sr          = .0002
     alpha       = 1
     Fs          = round(1/sr,2)
@@ -466,8 +502,8 @@ def main():
     start       = dt(2019,1,1,0,0,0); stop = dt(2019,4,30,23,59,59)
     refresh     = 0.07
     bt          = False
-    mode        = 'backtest' if bt else 'dump'
-    
+    mode        = 'backtest' if bt else 'sweep'
+    windows = [24,24*7,24*30]
 
     #################
     # HARMONICS
@@ -475,6 +511,7 @@ def main():
     fibo    = [1,1]
 
     _124_   = [1,2,4]
+    _129_   = [1,2,9]
     _135_   = [1,3,5]
     _369_   = [3,6,9]
     _obv_   = [1,2,5]
@@ -484,9 +521,10 @@ def main():
     unt     = [x for x in range(1,11)]
     sqr     = [2*x**2 for x in range(1,11)]
     cub     = [x**3 for x in range(1,11)]
-    h_rng   = [[x,y,z] for x in range(1,10) for y in range(1,10) for z in range(1,10) if x < y if y < z]
+    h_rng   = [[x,y,z] for x in range(1,100) for y in range(1,30) for z in range(1,30
+    ) if x < y if y < z]
     
-    comp    = [alpha*x for x in sqr[:harms]]
+    comp    = [alpha*x for x in _129_[:harms]]
     
     ##################
     # GO GO GO...
@@ -504,11 +542,14 @@ def main():
     print('='*80,'\n')
 
     if bt:
-        df,stats = backtest(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs,refresh=refresh,bt=bt)
+        df,stats = backtest(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs,refresh=refresh,bt=bt,windows=windows)
+        print('- Dump Complete...')
+    elif (mode == 'dump') & (not bt):
+        df,stats = dump(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs,windows=windows)
+        print('- Dump Complete...')
     else:
-        df,stats = dump(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs)
-
-    print(df.iloc[:,3:-7].describe())
+        df,results = harmonic_sweep(data=df_master,fft_col=fft_col,Fs=Fs,hm_days=hm_days,h_rng=h_rng)
+        print('\n',f'the winner:{results.iloc[results.chord_mse.argmin()][0]} with an MSE of {results.iloc[results.chord_mse.argmin()][1]}') 
 
 if __name__ == '__main__':
     main()
