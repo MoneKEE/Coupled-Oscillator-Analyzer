@@ -16,7 +16,8 @@ pd.plotting.register_matplotlib_converters()
 #import talib
 
 def plot_fft(data,comp,fft_col,p_col='close',Fs=1):
-    mask = data.fft_freq > 0
+    mask_1 = data.fft_freq > 0
+    mask_2 = np.abs(data['fft'][mask_1]) > np.std(np.abs(data['fft'][mask_1])) * 4
 
     with plt.style.context(style='ggplot'):
         plt.figure(1)
@@ -29,25 +30,27 @@ def plot_fft(data,comp,fft_col,p_col='close',Fs=1):
         ax3 = plt.subplot2grid(dims,(0,2),rowspan=r,colspan=c,sharex=ax1)
         ax4 = plt.subplot2grid(dims,(1,0),rowspan=r,colspan=3)
 
-        #ax1.magnitude_spectrum(data[fft_col],Fs=Fs)
-        ax1.stem(data.fft_freq[mask],np.abs(data['fft'][mask])/max(np.abs(data['fft'][mask])),linefmt='C0',markerfmt='',basefmt='C0')
+        ax1.stem(data.fft_freq[mask_1],np.where(mask_2==False,np.abs(data['fft'][mask_1])/max(np.abs(data['fft'][mask_1])),0),linefmt='C0', markerfmt='C0',basefmt='C0')
+        ax1.stem(data.fft_freq[mask_1],np.where(mask_2,np.abs(data['fft'][mask_1])/max(np.abs(data['fft'][mask_1])),0),linefmt='C1',markerfmt='C1',basefmt='C1')
         ax1.set_xlabel('Frequency')
         ax1.set_ylabel('Amplitude')
         ax1.title.set_text(f'magnitude @ Fs:{Fs} Size:{len(data)}')
 
-        ax2.plot(data.fft_ang[mask],(np.abs(data.fft[mask])/max(np.abs(data.fft[mask]))))
+        ax2.plot(data['fft_ang'],(np.abs(data['fft'])/max(np.abs(data['fft']))))
         ax2.title.set_text(f'angle @ Fs:{Fs} Size:{len(data)}')
 
-        ax3.phase_spectrum(data[fft_col],Fs=Fs)
+        ax3.phase_spectrum(data[fft_col]/np.max(data[fft_col]),Fs=Fs)
         ax3.title.set_text(f'phase @ Fs:{Fs} Size:{len(data)}')
 
         ax4.plot(data.index,0.2*data[fft_col],linewidth=1, linestyle='dotted',label=f'{fft_col}')
         for num_ in comp:
             ax4.plot(data.index,data[f'ifft_{num_}'],linewidth=2, label=f'ifft_{num_}')
         ax4.legend(loc='lower right')
+        ax4.set_ylabel('amplitude - close_1d')
         plt.draw()
 
 def plot_time_series(data):
+
     with plt.style.context(style='ggplot'):
         plt.figure(2)
 
@@ -88,6 +91,7 @@ def plot_time_series(data):
         plt.draw()
 
 def plot_positions(data,comp,buy_signals,sell_signals,fft_col='close_1d'):
+
     with plt.style.context(style='ggplot'):
         plt.figure(3)
 
@@ -163,49 +167,23 @@ def get_data_span(asset,start,stop,interval):
 
     return data.drop_duplicates()
 
-def fourier(data,fft_col='close_1d',n_harms=10,Fs=1):
+def get_fft(data,Fs,fft_col='close_1d',n_harms=10):
     print(f'- Deriving Fourier Transform...\n')
 
     close_fft       = np.fft.fft(np.asarray(data[fft_col].tolist()))
     data['fft']     = close_fft
     data['fft_ang'] = np.angle(close_fft)
     
-    fft_freq = np.fft.fftfreq(len(data),Fs)
+    fft_freq = np.fft.fftfreq(len(data),d=1/Fs)
 
     data['fft_freq'] = fft_freq
 
+    data.fillna(0,inplace=True)
+
     return data
 
-def filter_freqs(data,harms):
-    #Return a single freq from each of the three bands
-    #f_h,f_m and f_l.
-    f_list  = []
-    mag     = np.abs(data['fft']).reset_index().copy()
-    mag.drop(columns=['datetime'],inplace=True)
-
-    # Determines the segment length for each frequency band.
-    len_f       = len(data.fft_freq[freq>0])
-    bandwidth   = mt.floor(len_f/harms)
-
-    f = data.fft_freq.copy()
-
-    for i in range(harms):
-        mag_pseg    = mag[bandwidth*i:bandwidth*(i+1)]
-        mag_nseg    = mag.iloc[::-1][bandwidth*i:bandwidth*(i+1)]
-        mag_all     = mag_pseg.append(mag_nseg)
-        mag_max     = mag_all.fft.values.argmax()
-        mag_min     = mag_all.fft.values.argmin()
-
-        # Return the first freq in each band. Since the series are sorted in
-        # descending order, the returned index corresponds to the frequence 
-        # of greatest magnitude.d
-
-        f_list.append([mag_max,mag_all.fft.iloc[mag_max]])
-
-    return f_list
-
 def get_harms(data,f_list):
-    print('- Converting frequency to periods...\n')
+    print('- Finding Harmonics...\n')
 
     comp = []
     for x in f_list:
@@ -220,6 +198,8 @@ def get_ifft(data,comp):
     print('- Determining component sinusoids and extracting desired harmonics...\n')
     fft_list = np.asarray(data.fft.tolist())
 
+    data['ifft'] = np.real(np.fft.ifft(np.copy(fft_list)))
+
     _num_ = 0
     for num_ in comp:
         bnd                     = num_
@@ -227,6 +207,8 @@ def get_ifft(data,comp):
         fft_listm10[bnd:-bnd]   = 0
         data['ifft_'+str(bnd)]  =np.real(np.fft.ifft(fft_listm10))
         _num_                   = bnd
+
+    data.fillna(0,inplace=True)
 
     return data
 
@@ -365,7 +347,7 @@ def resume_run(inc):
     plt.pause(inc)
     plt.clf()
 
-def mean_squared_error(data,comp,fft_col='close_1d'):
+def mean_squared_error(data,comp,fft_col):
     h_list = ['ifft_'+str(x) for x in comp]
     ifft_sum = data[h_list].sum(axis=1)
     signal = data[fft_col]
@@ -382,14 +364,32 @@ def print_results(data):
     print('\n','Projected Returns')
     print('-'*30)
     print(result)
+
+def calc_stats(data,wnd):
+    stats = pd.DataFrame()
+
+    stats['std'] = data['close_1d'].rolling(wnd).std()
+    stats['mean'] = data['close_1d'].rolling(wnd).mean()
+    stats['median'] = data['close_1d'].rolling(wnd).median()
+    stats['min'] = data['close_1d'].rolling(wnd).min()
+    stats['max'] = data['close_1d'].rolling(wnd).max()
+
+    stats['7_std'] = data['close_1d'].rolling(wnd*7).std()
+    stats['7_mean'] = data['close_1d'].rolling(wnd*7).mean()
+    stats['7_median'] = data['close_1d'].rolling(wnd*7).median()
+    stats['7_min'] = data['close_1d'].rolling(wnd*7).min()
+    stats['7_max'] = data['close_1d'].rolling(wnd*7).max()
+
+    return stats
     
 def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt):
     # At the start it is assumed that 
     # N days have already been processed
     N = 24*7
     data_inc = data[:N].copy()
+    stats = pd.DataFrame()
 
-    for t in range(N,len(data)):
+    for t in range(N+1,len(data)):
         data_inc = data_inc.append(data[t:(t+1)])
 
         try:
@@ -399,35 +399,35 @@ def backtest(data,comp,hm_days,fft_col,harms,Fs,refresh,bt):
             break
 
         data_inc  = process_data_for_labels_past(data=data_inc,hm_days=hm_days)
-
-        data_inc              = fourier(data=data_inc,fft_col=fft_col,n_harms=harms,Fs=Fs)
-        data_inc              = get_ifft(data=data_inc,comp=comp)
+        data_inc  = get_fft(data=data_inc,fft_col=fft_col,n_harms=harms,Fs=Fs)
+        data_inc  = get_ifft(data=data_inc,comp=comp)
 
         data_inc, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data_inc,signal=comp[-1],cross=comp[0],fft_col=fft_col,bt=bt)
         data_inc, results = returns(data=data_inc)
+
+        stats = calc_stats(data_inc,wnd=24)
 
         buys        = data_inc[buy_signals]
         sells       = data_inc[sell_signals]
         id_buys     = data_inc[id_buy_signals]
         id_sells    = data_inc[id_sell_signals]
 
-        plot_time_series(data_inc)
+        # plot_time_series(data_inc)
         plot_fft(data_inc,Fs=Fs,comp=comp,fft_col=fft_col)
-        plot_positions(data_inc,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
+        #plot_positions(data_inc,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
 
         if t == len(data_inc):
             plt.show()
         else:
-            resume_run(refresh)
+           resume_run(refresh)
 
-    return data_inc
+    return data_inc, stats
     
 def dump(data,comp,hm_days,fft_col,harms,Fs):
+    stats = pd.DataFrame()
     data_d = process_data_for_labels_past(data=data,hm_days=hm_days)
 
-    data_d           = fourier(data=data_d,fft_col=fft_col,n_harms=harms,Fs=Fs)
-    # freq_filt       = filter_freqs(data=data_d,freq=fft_freq,harms=harms)
-    # freq_2_period   = get_harms(data=data_d,f_list=freq_filt)
+    data_d           = get_fft(data=data_d,fft_col=fft_col,n_harms=harms,Fs=Fs)
     data_d           = get_ifft(data=data_d,comp=comp)
 
     data_d, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data_d,signal=comp[-1],cross=comp[0],fft_col=fft_col)
@@ -438,12 +438,14 @@ def dump(data,comp,hm_days,fft_col,harms,Fs):
     id_buys     = data_d[id_buy_signals]
     id_sells    = data_d[id_sell_signals]
 
+    stats = calc_stats(data_d,wnd=24)
+
     plot_positions(data=data_d,comp=comp,buy_signals=buys,sell_signals=sells,fft_col=fft_col)
     plot_fft(data=data_d,Fs=Fs,comp=comp,fft_col=fft_col)
     plot_time_series(data=data_d)
     plt.show()
 
-    return data_d
+    return data_d, stats
 
 ##############################################
 # MAIN PROCEDURE
@@ -453,16 +455,17 @@ def main():
     #################
     # PARAMETERS
     #################
-    harms       = 3
-    sr          = 1
+    harms       = 5
+    sr          = .0002
+    alpha       = 1
     Fs          = round(1/sr,2)
     hm_days     = 1
     asset       = 'ETH-USD'
     fft_col     = 'close_1d'
     interval    = 'hours'
-    start       = dt(2019,1,1,0,0,0); stop = dt(2019,1,31,23,59,59)
+    start       = dt(2019,1,1,0,0,0); stop = dt(2019,4,30,23,59,59)
     refresh     = 0.07
-    bt          = True
+    bt          = False
     mode        = 'backtest' if bt else 'dump'
     
 
@@ -470,7 +473,6 @@ def main():
     # HARMONICS
     #################
     fibo    = [1,1]
-    alpha   = 1
 
     _124_   = [1,2,4]
     _135_   = [1,3,5]
@@ -480,33 +482,33 @@ def main():
     fibo    = [fibo.append(fibo[k-1]+fibo[k-2]) for k in range(2,10)]
     prim    = [x for x in range(2, 30) if all(x % y != 0 for y in range(2, x))]
     unt     = [x for x in range(1,11)]
-    sqr     = [x**2 for x in range(1,11)]
+    sqr     = [2*x**2 for x in range(1,11)]
     cub     = [x**3 for x in range(1,11)]
     h_rng   = [[x,y,z] for x in range(1,10) for y in range(1,10) for z in range(1,10) if x < y if y < z]
     
-    comp    = [alpha*x for x in prim[:harms+1]]
+    comp    = [alpha*x for x in sqr[:harms]]
     
     ##################
-    # GO
-    #################
+    # GO GO GO...
+    ##################
     df_master  = get_data_span(asset=asset,start=start,stop=stop,interval=interval) 
 
-    params = pd.DataFrame([mode,harms,fft_col,Fs,asset,interval,len(df_master)]
+    params = pd.DataFrame(  [mode,harms,fft_col,Fs,asset,interval,len(df_master)]
                             ,index=['Mode','n Harmonics','FFT Col','Fs','Asset','Interval','n Points']
                             ,columns=['Parameters']
                         )
 
     print('='*80)
-    print(f'STARTING NEW RUN FOR DATA RANGE FROM:{start} TO:{stop}','\n')
+    print(f'Starting {mode} run for date range {start} - {stop}','\n')
     print(params)
     print('='*80,'\n')
 
     if bt:
-        df = backtest(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs,refresh=refresh,bt=bt)
+        df,stats = backtest(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs,refresh=refresh,bt=bt)
     else:
-        df = dump(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs)
+        df,stats = dump(data=df_master,comp=comp,hm_days=hm_days,fft_col=fft_col,harms=harms,Fs=Fs)
 
-    print(df)
+    print(df.iloc[:,3:-7].describe())
 
 if __name__ == '__main__':
     main()
