@@ -14,6 +14,7 @@ from datetime import timedelta
 from sklearn.metrics import mean_squared_error as mse
 from scipy.signal import find_peaks
 from cmath import phase
+from contextlib import suppress
 import matplotlib.pyplot as plt
 import matplotlib.dates as mpdates
 import math as mt
@@ -25,10 +26,10 @@ from sklearn.metrics.regression import mean_squared_error
 pd.plotting.register_matplotlib_converters()
 #import talib
 
-def plot_fft(data,comp,psig_col,p_col='close',Fs=1):
+def plot_fft(data,comp,psig_col,p_col='c',Fs=1):
 
     mask_1 = data.fft_freq > 0
-    mask_2 = np.abs(data['fft'][mask_1]) > np.std(np.abs(data['fft'][mask_1])) * 4
+    mask_2 = np.abs(data[f'{psig_col}_fft'][mask_1]) > np.std(np.abs(data[f'{psig_col}_fft'][mask_1])) * 4
 
     with plt.style.context(style='ggplot'):
         plt.figure(1)
@@ -41,13 +42,13 @@ def plot_fft(data,comp,psig_col,p_col='close',Fs=1):
         ax3 = plt.subplot2grid(dims,(0,2),rowspan=r,colspan=c,sharex=ax1)
         ax4 = plt.subplot2grid(dims,(1,0),rowspan=r,colspan=3)
 
-        ax1.stem(data.fft_freq[mask_1],np.where(mask_2==False,np.abs(data['fft'][mask_1])/max(np.abs(data['fft'][mask_1])),0),linefmt='C0', markerfmt='C0',basefmt='C0')
-        ax1.stem(data.fft_freq[mask_1],np.where(mask_2,np.abs(data['fft'][mask_1])/max(np.abs(data['fft'][mask_1])),0),linefmt='C1',markerfmt='C1',basefmt='C1')
+        ax1.stem(data.fft_freq[mask_1],np.where(mask_2==False,np.abs(data[f'{psig_col}_fft'][mask_1])/max(np.abs(data[f'{psig_col}_fft'][mask_1])),0),linefmt='C0', markerfmt='C0',basefmt='C0')
+        ax1.stem(data.fft_freq[mask_1],np.where(mask_2,np.abs(data[f'{psig_col}_fft'][mask_1])/max(np.abs(data[f'{psig_col}_fft'][mask_1])),0),linefmt='C1',markerfmt='C1',basefmt='C1')
         ax1.set_xlabel('Frequency')
         ax1.set_ylabel('Amplitude')
         ax1.title.set_text(f'magnitude @ Fs:{Fs} Size:{len(data)}')
 
-        ax2.plot(data['fft_ang'],(np.abs(data['fft'])/max(np.abs(data['fft']))))
+        ax2.plot(data[f'{psig_col}_ang'],(np.abs(data[f'{psig_col}_fft'])/max(np.abs(data[f'{psig_col}_fft']))))
         ax2.title.set_text(f'angle @ Fs:{Fs} Size:{len(data)}')
 
         ax3.phase_spectrum(data[psig_col]/np.max(data[psig_col]),Fs=Fs)
@@ -57,7 +58,7 @@ def plot_fft(data,comp,psig_col,p_col='close',Fs=1):
         for num_ in comp:
             ax4.plot(data.index,data[f'ifft_{num_}'],linewidth=2, label=f'ifft_{num_}')
         ax4.legend(loc='lower right')
-        ax4.set_ylabel('amplitude - close_1d')
+        ax4.set_ylabel('amplitude - c_1d')
         plt.draw()
 
 def plot_time_series(data):
@@ -82,32 +83,32 @@ def plot_time_series(data):
         ax9 = plt.subplot2grid(dims,(18,5),rowspan=r,colspan=c)
         ax10 = plt.subplot2grid(dims,(24,5),rowspan=r,colspan=c)
 
-        ax1.plot(data.index,data['close'])
-        ax1.title.set_text(f'close')
+        ax1.plot(data.index,data['c_1d1'])
+        ax1.title.set_text('dc')
 
-        ax2.annotate(f'Hi There', xy=(3, 1),  xycoords='data',
-            xytext=(0.8, 0.95), textcoords='axes fraction',
-            arrowprops=dict(facecolor='black', shrink=0.05),
-            horizontalalignment='right', verticalalignment='top',
-            )
+        # ax2.annotate(f'Hi There', xy=(3, 1),  xycoords='data',
+        #     xytext=(0.8, 0.95), textcoords='axes fraction',
+        #     arrowprops=dict(facecolor='black', shrink=0.05),
+        #     horizontalalignment='right', verticalalignment='top',
+        #     )
 
-        ax2.plot(data.index,data['close_1d1'])
-        ax2.title.set_text(f'close 1d')
-        ax3.plot(data.index,data['vol_1d1'])
-        ax3.title.set_text(f'volume 1d')
-        ax4.plot(data.index,data['close_1d1_mean24'])
-        ax4.title.set_text(f'close 1d mean 24')
-        ax5.bar(data.index,data['volume'])
-        ax5.title.set_text(f'volume')
+        ax2.plot(data.index,data['c_1d1_avgwnd7'])
+        ax2.title.set_text(f'c avg 7')
+        ax3.plot(data.index,data['v_1d1'])
+        ax3.title.set_text(f'dv')
+        ax4.plot(data.index,data['v_1d1_avgwnd7'])
+        ax4.title.set_text(f'v avg 7')
+        ax5.plot(data.index,data['sys_pwr'])
+        ax5.title.set_text(f'power')
 
-        ax6.boxplot(data.close,vert=False)
-        ax7.boxplot(data.close_1d1,vert=False)
-        ax8.boxplot(data.vol_1d1,vert=False)
-        ax9.boxplot(data.close_1d1_mean24,vert=False)
-        ax10.boxplot(data.volume,vert=False)
+        ax6.boxplot(data.c,vert=False)
+        ax7.boxplot(data.c_1d1,vert=False)
+        ax8.boxplot(data.v_1d1,vert=False)
+        ax9.boxplot(data.v_1d1_avgwnd7,vert=False)
+        ax10.boxplot(data.sys_pwr,vert=False)
         plt.draw()
 
-def plot_positions(data,comp,buy_signals,sell_signals,psig_col='close_1d1'):
+def plot_positions(data,comp,buy_signals,sell_signals,psig_col='c_1d1'):
 
     with plt.style.context(style='ggplot'):
         plt.figure(3)
@@ -124,13 +125,13 @@ def plot_positions(data,comp,buy_signals,sell_signals,psig_col='close_1d1'):
         ax2.plot(data.index,data.position,drawstyle='steps',linestyle='dotted',linewidth=3)
         ax2.title.set_text('positions')
 
-        ax3.plot(data.index,data.close_1d,linewidth = 1.5, label=psig_col, linestyle='dotted')
+        ax3.plot(data.index,data.c_1d1,linewidth = 1.5, label=psig_col, linestyle='dotted')
         for num_ in comp:
             ax3.plot(data.index,data[f'ifft_{num_}'],linewidth=2, label=f'ifft_{num_}')
         ax3.title.set_text('Harmonic triplet')
         ax3.legend(loc='lower right')
 
-        ax4.bar(data.index, data.volume, linewidth = 2, label = 'volume')
+        ax4.bar(data.index, data.v, linewidth = 2, label = 'volume')
         plt.draw()
 
 def get_data_span(asset,start,stop,interval):
@@ -169,17 +170,17 @@ def get_data_span(asset,start,stop,interval):
 
         data = data.append(raw_data)
 
-    columnlist = {0:'time',1:'low',2:'high',3:'open',4:'close',5:'volume'}
+    columnlist = {0:'t',1:'l',2:'h',3:'o',4:'c',5:'v'}
     data.rename(columns = columnlist,inplace=True)
 
-    data['datetime'] = pd.to_datetime(data['time'],unit='s')
+    data['dt'] = pd.to_datetime(data['t'],unit='s')
     #data['datetime'].dt.strftime("%y-%m-%d %H:%M:%S")
 
-    data.sort_values('datetime', ascending=True, inplace=True)
-    data.set_index(data.datetime,inplace=True)
-    data.drop(['time','datetime'],inplace=True,axis=1)
+    data.sort_values('dt', ascending=True, inplace=True)
+    data.set_index(data.dt,inplace=True)
+    data.drop(['t','dt'],inplace=True,axis=1)
 
-    data.volume     = data['volume'].round(3)
+    data.volume     = data['v'].round(3)
     data            = data.loc[:stop]
     #print(f'\nCoinbase Data Pull| start:{data.index[0]} stop:{data.index[-1]} interval:{interval} diff:{len(data)} terms:{terms}\n')
 
@@ -189,9 +190,9 @@ def get_fft(data,Fs,col):
 
     print(f'- Performing Fourier Transform for {col}..\n')
 
-    close_fft       = np.fft.fft(np.asarray(data[col].tolist()))
-    data[f'{col}_fft']     = close_fft
-    data[f'{col}_ang'] = np.angle(close_fft)
+    c_fft       = np.fft.fft(np.asarray(data[col].tolist()))
+    data[f'{col}_fft']     = c_fft
+    data[f'{col}_ang'] = np.angle(c_fft)
     
     fft_freq = np.fft.fftfreq(len(data),d=1/Fs)
 
@@ -214,7 +215,7 @@ def get_harms(data,f_list):
 
     return comp
 
-def get_ifft(data,comp,col='close_1d1'):
+def get_ifft(data,comp,col):
 
     curframe = inspect.currentframe()
     calframe = inspect.getouterframes(curframe, 2)
@@ -240,6 +241,12 @@ def get_ifft(data,comp,col='close_1d1'):
     data.fillna(0,inplace=True)
 
     return data
+
+def get_fftpeaks(data,col='sys_psd'):
+    data_fp = data.copy()
+    pos = data['fft_freq'] > 0
+
+    return find_peaks(10 * np.log10(data[col][pos]))
 
 def positions(data,signal,cross,psig_col,bt=False):
 
@@ -322,123 +329,6 @@ def returns(data):
 
     return data, results
 
-def optimize(data,psig_col,results):
-
-    idx = results['strategy'].values.argmax()
-    s_res = results.iloc[idx,:3]
-    h_res = results['hold'][0]
-    i_res = results['ideal'][0]
-
-    print(f'- Optimizing...\n')
-
-    data, buy_signals, sell_signals, id_buy_signals, id_sell_signals = positions(data=data,signal=s_res.signal,cross=s_res.cross,psig_col=psig_col)
-
-    results['rank'] = results.strategy.rank(ascending=False)
-    results.sort_values('rank',ascending=True,inplace=True)
-    results.reset_index(drop=True,inplace=True)
-    results.drop(columns='rank',inplace=True)
-
-    same    = len(data[(data.id_position == data.position)])
-    diff    = len(data[(data.id_position != data.position)])
-    acc     = round(100*same/(same + diff),2)
-
-    print(f'Returns Optimized Strategy| ifft_{str(int(s_res.signal))} > ifft_{str(int(s_res.cross))}')
-    print(f'returns| total: {round(s_res.strategy*100,2)}%\thodl: {round(h_res*100,2)}%\tideal: {round(i_res*100,2)}%')
-    print(f'position accuracy| {acc}%\n')
-
-    buys        = data[buy_signals]
-    sells       = data[sell_signals]
-    id_buys     = data[id_buy_signals]
-    id_sells    = data[id_sell_signals]
-
-    print(f'Spreads\nstrategy -> buys:{len(buys[buys.position==1])} sells:{len(sells[sells.position==0])}')
-    print(f'ideal -> buys:{len(id_buys[id_buys.id_position==1])} sells:{len(id_sells[id_sells.id_position==0])}\n')
-
-    return data,buy_signals, sell_signals, id_buy_signals, id_sell_signals, results
-
-def process_data_for_labels_past(data,psig_col='close_1d1',vsig_col='vol_1d1',diff_offset=1,diff=1):
-    # Create the model metrics
-    # 1. Difference Signal ->dP(t) = P(t)-P(t-n)
-    # 2. Polarity -> d(t) = (1,0,-1)
-    # 3. Amplitude -> A(t) = abs(P(t)-P(t-n))
-    # 4. Spread -> S(t) = H(t) - L(t) for the window
-    # 5. Mean, Median, Std, Sum for the window
-    # 6. dsum -> Sum(d(t)) for the window
-    # 7. H, L, O for the window
-
-    data_p = data.copy()
-
-    print('- Processing data for past features...\n')
-
-    # Create the difference signal for both price and volume
-    print(f'- Creating difference {diff} with {diff_offset} offset...\n')
-
-    dp1 = (data_p['close'] - data_p['close'].shift(diff_offset))/np.abs(data_p['close'] - data_p['close'].shift(diff_offset)).max()
-    dv1 = (data_p[f'volume'] - data_p[f'volume'].shift(diff_offset))/np.abs(data_p[f'volume'] - data_p[f'volume'].shift(diff_offset)).max()
-
-    dp2 = dp1 - dp1.shift(diff_offset)
-    dv2 = dv1 - dv1.shift(diff_offset)
-
-    if diff == 1:
-        data_p[psig_col] = dp1
-        data_p[vsig_col] = dv1
-    elif diff == 2:
-        data_p[psig_col] = dp1 - dp1.shift(diff_offset)
-        data_p[vsig_col] = dv1 - dv1.shift(diff_offset)
-    else:
-        data_p[psig_col] = dp2 - dp2.shift(diff_offset)
-        data_p[vsig_col] = dv2 - dv2.shift(diff_offset)
-
-    data_p['pv_power'] = data_p[psig_col] * data_p[vsig_col]
-    data_p[f'pv_psd'] = np.abs(data_p['pv_power'])**2
-   # data_p[f'{psig_col}_psd'] = np.abs(data_p[psig_col])**2
-   # data_p[f'{vsig_col}_psd'] = np.abs(data_p[vsig_col])**2
-
-    # Create the Amplitude and Polarity metrics
-    data_p[f'{psig_col}_amp'] = np.abs(data_p[psig_col])
-    data_p[f'{vsig_col}_amp'] = np.abs(data_p[vsig_col])
-
-    data_p[f'{psig_col}_pol'] = np.where(-1 * data_p[psig_col] > 0,-1
-                            ,np.where(-1 * data_p[psig_col] < 0,1,0) )
-    
-    data_p[f'{vsig_col}_pol'] = np.where(-1 * data_p[vsig_col] > 0,-1
-                            ,np.where(-1 * data_p[vsig_col] < 0,1,0) )
-
-    # Create the Spread metrics
-    data_p[f'{psig_col}_spread'] = data_p[psig_col].max() - data_p[psig_col].min()
-    data_p[f'{vsig_col}_spread'] = data_p[vsig_col].max() - data_p[vsig_col].min()
-
-    # Create the Shape Context metrics [1=L->H,0=H->L]
-    data_p[f'{psig_col}_shape'] = np.where(data_p[psig_col].argmax()>data_p[psig_col].argmin(),1,0)
-    data_p[f'{vsig_col}_shape'] = np.where(data_p[vsig_col].argmax()>data_p[vsig_col].argmin(),1,0)
-
-    # Create Mean, Median and Standard Deviation metrics
-    data_p[f'{psig_col}_mean24'] = data_p[psig_col].rolling(24).mean()
-    data_p[f'{psig_col}_median24'] = data_p[psig_col].rolling(24).median()
-    data_p[f'{psig_col}_std24'] = data_p[psig_col].rolling(24).std()
-
-    data_p[f'{psig_col}_mean'] = data_p[psig_col].mean()
-    data_p[f'{psig_col}_median'] = data_p[psig_col].median()
-    data_p[f'{psig_col}_mode'] = data_p[psig_col].mode()
-    data_p[f'{psig_col}_std'] = data_p[psig_col].std()
-
-    data_p[f'{vsig_col}_mean24'] = data_p[vsig_col].rolling(24).mean()
-    data_p[f'{vsig_col}_median24'] = data_p[vsig_col].rolling(24).median()
-    data_p[f'{vsig_col}_std24'] = data_p[vsig_col].rolling(24).std()
-
-    data_p[f'{vsig_col}_mean'] = data_p[vsig_col].mean()
-    data_p[f'{vsig_col}_median'] = data_p[vsig_col].median()
-    data_p[f'{vsig_col}_mode'] = data_p[vsig_col].mode()
-    data_p[f'{vsig_col}_std'] = data_p[vsig_col].std()
-
-    data_p.fillna(0,inplace=True)
-
-    print('Field Stats')
-    print('-'*30)
-    print(data_p.describe(),'\n\n')
-
-    return data_p.drop(columns=['high','low','open'])
-
 def resume_run(inc):
 
     plt.pause(inc)
@@ -476,13 +366,134 @@ def progress_bar(x,load_text):
       
     return bar
 
-def get_fftpeaks(data,psig_col):
-    data_fp = data.copy()
-    pos = data['fft_freq'] > 0
+def process_data_for_labels_past(data,windows,psig_col,vsig_col,diff_offset=1,diff=1):
+    # Create the model metrics
+    # 1. Difference Signal ->dP(t) = P(t)-P(t-n)
+    # 2. Polarity -> d(t) = (1,0,-1)
+    # 3. Amplitude -> A(t) = abs(P(t)-P(t-n))
+    # 4. Spread -> S(t) = H(t) - L(t) for the window
+    # 5. Mean, Median, Std, Sum for the window
+    # 6. dsum -> Sum(d(t)) for the window
+    # 7. H, L, O for the window
 
-    return find_peaks(10 * np.log10(data[f'pv_psd'][pos]))
+    data_p = data.copy()
 
-def harmonic_sweep(data,h_rng,Fs,diff_offset,psig_col='close_1d1'):
+    print('- Processing data for past features...\n')
+
+    # Create the difference signal for both price and volume
+    print(f'- Creating difference {diff} with {diff_offset} offset...\n')
+
+    dp1 = (data_p['c'] - data_p['c'].shift(diff_offset))/np.abs(data_p['c'] - data_p['c'].shift(diff_offset)).max()
+    dv1 = (data_p[f'v'] - data_p[f'v'].shift(diff_offset))/np.abs(data_p[f'v'] - data_p[f'v'].shift(diff_offset)).max()
+
+    dp2 = dp1 - dp1.shift(diff_offset)
+    dv2 = dv1 - dv1.shift(diff_offset)
+
+    if diff == 1:
+        data_p[psig_col] = dp1
+        data_p[vsig_col] = dv1
+    elif diff == 2:
+        data_p[psig_col] = dp1 - dp1.shift(diff_offset)
+        data_p[vsig_col] = dv1 - dv1.shift(diff_offset)
+    else:
+        data_p[psig_col] = dp2 - dp2.shift(diff_offset)
+        data_p[vsig_col] = dv2 - dv2.shift(diff_offset)
+
+    # Create the Amplitude and Polarity metrics
+    data_p[f'{psig_col}_amp'] = np.abs(data_p[psig_col])
+    data_p[f'{vsig_col}_amp'] = np.abs(data_p[vsig_col])
+
+    data_p[f'{psig_col}_pol'] = np.where(-1 * data_p[psig_col] > 0,-1
+                            ,np.where(-1 * data_p[psig_col] < 0,1,0) )
+    
+    data_p[f'{vsig_col}_pol'] = np.where(-1 * data_p[vsig_col] > 0,-1
+                            ,np.where(-1 * data_p[vsig_col] < 0,1,0) )
+
+    # Create power and resistance metrics
+    data_p['sys_pwr'] = data_p[psig_col] * data_p[vsig_col]
+    data_p[f'sys_psd'] = np.abs(data_p['sys_pwr'])**2
+    data_p['sys_r'] = (data_p[f'{psig_col}_amp']/data_p[f'{vsig_col}_amp'])
+    data_p.fillna(0,inplace=True)
+    data_p['sys_c'] = data_p[f'{vsig_col}_amp']/data_p[f'{psig_col}_amp']
+    data_p.fillna(0,inplace=True)
+    if np.isinf(data_p.sys_c.max()):
+        data_p.replace([np.inf, -np.inf], np.nan,inplace=True)
+        data_p.fillna(data_p.sys_c.max(),inplace=True)
+
+    data_p['sys_r'] = data_p['sys_r']/data_p['sys_r'].max()
+    data_p['sys_c'] = data_p['sys_c']/data_p['sys_c'].max()
+ 
+    # Create the Spread metrics
+    if data_p.shape[1] == 15:
+    # Initialize the columns
+        data_p[f'{psig_col}_sprdwnd7']= None
+        data_p[f'{vsig_col}_sprdwnd7']= None
+        data_p[f'{psig_col}_shpwnd7']= None
+        data_p[f'{vsig_col}_shpwnd7']= None
+        data_p[f'{psig_col}_avgwnd7'] = None
+        data_p[f'{psig_col}_medwnd7'] = None
+        data_p[f'{psig_col}_modwnd7'] = None
+        data_p[f'{psig_col}_stdwnd7'] = None
+        data_p[f'{vsig_col}_avgwnd7'] = None
+        data_p[f'{vsig_col}_medwnd7'] = None
+        data_p[f'{vsig_col}_modwnd7'] = None
+        data_p[f'{vsig_col}_stdwnd7'] = None
+
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_sprdwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].max() - data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].min()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_sprdwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].max() - data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].min()
+    # Create the Shape Context metrics [1=L->H,0=H->L]
+    try:
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_shpwnd7')].iloc[-windows[1]:] = np.where(data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].argmax()>data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].argmin(),1,0)
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_shpwnd7')].iloc[-windows[1]:] = np.where(data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].argmax()>data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].argmin(),1,0)
+    except:
+        pass
+    # Create Mean, Median and Standard Deviation metrics
+    try:
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_avgwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].mean()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_medwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].median()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_modwnd7')] = np.abs(data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].mode()).max()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{psig_col}_stdwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(psig_col)].std()
+    except:
+        pass
+
+    
+    data_p[f'{psig_col}_avg'] = data_p[psig_col].mean()
+    data_p[f'{psig_col}_med'] = data_p[psig_col].median()
+    data_p[f'{psig_col}_mod'] = data_p[psig_col].mode()
+    data_p[f'{psig_col}_std'] = data_p[psig_col].std()
+    
+
+    try:
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_avgwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].mean()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_medwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].median()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_modwnd7')] = np.abs(data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].mode()).max()
+        data_p.iloc[-windows[1]:,data_p.columns.get_loc(f'{vsig_col}_stdwnd7')] = data_p.iloc[-windows[1]:,data_p.columns.get_loc(vsig_col)].std()
+    except:
+        pass
+        
+    data_p[f'{vsig_col}_avg'] = data_p[vsig_col].mean()
+    data_p[f'{vsig_col}_med'] = data_p[vsig_col].median()
+    data_p[f'{vsig_col}_mod'] = data_p[vsig_col].mode()
+    data_p[f'{vsig_col}_std'] = data_p[vsig_col].std()
+
+    data_p.fillna(0,inplace=True)
+
+    print('Field Stats')
+    print('-'*30)
+    # print(data_p.describe(),'\n\n')
+    
+    try:
+        data_p.drop(columns=['h','l','o'],inplace=True) 
+    except:
+        pass
+
+    return data_p
+
+def optimize(data,psig_col,results):
+    pass
+    return None
+
+def harmonic_sweep(data,h_rng,Fs,diff_offset,psig_col='c_1d1'):
 
     results= []
     load_text = f'verforming {len(data)} runs'
@@ -516,7 +527,6 @@ def backtest(data,comp,psig_col,vsig_col,harms,Fs,windows,bt,refresh,diff_offset
     stats = pd.DataFrame()
 
     for t in range(N+1,len(data)):
-        data_inc = data_inc.append(data[t:(t+1)])
 
         try:
             print('='*80)
@@ -524,7 +534,7 @@ def backtest(data,comp,psig_col,vsig_col,harms,Fs,windows,bt,refresh,diff_offset
         except:
             break
 
-        data_inc  = process_data_for_labels_past(data=data_inc,diff_offset=diff_offset)
+        data_inc  = process_data_for_labels_past(data=data_inc,psig_col=psig_col,vsig_col=vsig_col,diff_offset=diff_offset,windows=windows)
         data_inc  = get_fft(data=data_inc,col=psig_col,Fs=Fs)
         data_inc  = get_ifft(data=data_inc,comp=comp,col=psig_col)
 
@@ -539,8 +549,14 @@ def backtest(data,comp,psig_col,vsig_col,harms,Fs,windows,bt,refresh,diff_offset
         # id_sells    = data_inc[id_sell_signals]
 
         plot_time_series(data_inc)
-        # plot_fft(data_inc,Fs=Fs,comp=comp,psig_col=psig_col)
+        #plot_fft(data_inc,Fs=Fs,comp=comp,psig_col=psig_col)
         # plot_positions(data_inc,comp=comp,buy_signals=buys,sell_signals=sells,psig_col=psig_col)
+
+        # data_inc.iloc[:,:10].plot(subplots=True)
+        # data_inc.iloc[:,10:21].plot(subplots=True)
+        # time.sleep(2)
+
+        data_inc = data_inc.append(data[t:(t+1)])
 
         if t == len(data):
             plt.show()
@@ -557,6 +573,7 @@ def dump(data,comp,psig_col,vsig_col,harms,Fs,windows,diff_offset=1,diff=1):
                                             ,psig_col=psig_col
                                             ,vsig_col=vsig_col
                                             ,diff=diff
+                                            ,windows=windows
                                             )
     data_d  = get_fft(  data=data_d
                         ,col=psig_col
@@ -567,14 +584,19 @@ def dump(data,comp,psig_col,vsig_col,harms,Fs,windows,diff_offset=1,diff=1):
                         ,Fs=Fs
                         )
     ppeaks, pprops = get_fftpeaks(  data=data_d
-                                    ,psig_col=psig_col
+                                    ,col='sys_psd'
                                     )
     vpeaks, vprops = get_fftpeaks(  data=data_d
-                                    ,psig_col=vsig_col
+                                    ,col='sys_psd'
                                     )
     # data_d  = get_ifft( data=data_d
     #                     ,comp=comp
     #                     )
+
+    data_d.iloc[:,2:12].plot(subplots=True)
+    pd.plotting.scatter_matrix(data_d[['c_1d1','sys_r','sys_c','v_1d1','sys_pwr']],grid=True,diagonal='hist')
+    data_d.iloc[:,13:].plot(subplots=True)
+    plt.show()
 
     return data_d
 
@@ -589,12 +611,12 @@ def main():
     diff_offset = 1
     diff        = 1
     refresh     = 0.07
-    bt          = True
+    bt          = False
     windows     = [24,24*7,24*30]
-    start       = dt(2019,1,1,0,0,0); stop = dt(2019,2,1,23,59,59)
+    start       = dt(2019,1,1,0,0,0); stop = dt(2019,2,1,00,00,00)
     asset       = 'ETH-USD'
-    psig_col    = f'close_{diff}d{diff_offset}'
-    vsig_col    = f'vol_{diff}d{diff_offset}'
+    psig_col    = f'c_{diff}d{diff_offset}'
+    vsig_col    = f'v_{diff}d{diff_offset}'
     interval    = 'hours'
     mode        = 'backtest' if bt else 'dump'
    
@@ -672,14 +694,14 @@ def main():
         print('- Sweep Complete...')
 
         print(  '\n'
-                ,f'the winner:{sweep_res.iloc[sweep_res.chord_mse.argmin()][0]} with an MSE of {sweep_res.iloc[sweep_res.chord_mse.argmin()][1]}'
+                ,f'the winner:{sweep_res.iloc[sweep_res.chord_mse.argmin(),0]} with an MSE of {sweep_res.iloc[sweep_res.chord_mse.argmin(),1]}'
                 ) 
 
-    ppeaks, pprops = get_fftpeaks(data=df,psig_col=psig_col)
-    vpeaks, vprops = get_fftpeaks(data=df,psig_col=vsig_col)
+    ppeaks, pprops = get_fftpeaks(data=df,col='sys_psd')
+    vpeaks, vprops = get_fftpeaks(data=df,col='sys_psd')
     # Pause for interactive session   
     #pd.plotting.scatter_matrix(df.loc[:,[f'{vsig_col}',f'{vsig_col}_psd',f'{psig_col}_psd',f'{psig_col}','sig_power']])
-    # df.loc[:,[f'{psig_col}',f'{vsig_col}',f'{psig_col}_psd',f'{vsig_col}_psd','sig_power']].plot(subplots=True)
+    # df.loc[:,[f'{psig_col}',f'{vsig_col}_meanwnd7',f'{vsig_col}_modewnd7',f'{vsig_col}','sys_psd','pv_power']].plot(subplots=True)
     # plt.show() 
     pass
 
