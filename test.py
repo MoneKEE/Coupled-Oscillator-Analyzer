@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 from datetime import datetime as dt
-import datacapture as dc
+#import datacapture as dc#
 import models as mod
 import misc
 

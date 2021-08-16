@@ -1,88 +1,98 @@
+import nonlinear as nl
 import misc
 import models as mod
+import numpy as np
 import frequencies as freq
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
 import pandas as pd
-import trader
 import plots
-import frequencies
-import nonlinear as nl
 import time
-import inspect
-    
-def stream(data,comp,harms,Fs,windows,bt,refresh,df1cols,df2cols,obv=['dv1','dc1'],diff_offset=1,diff=1,k1=1,k2=1):
+
+
+
+def stream(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
     # At the start it is assumed that 
     # N days have already been processed
-    N = 24*7
 
-    data_norm = misc.normalizedf(data)
-    data_s = data_norm[:N].copy()
+    data_n = misc.normalizedf(data)
+    data_s = data_n[:N].copy()
 
-    try:
-        while True:
-            for t in range(N,len(data)):
-                try:
-                    print('='*80)
-                    print(f'- Processing Frame #{t}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
-                except:
-                    break
+    for t in range(N,len(data)):
+        try:
+            print('='*80)
+            print(f'- Processing Frame #{t}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
+        except:
+            break
 
-                data_s  = mod.ddm(data=data_s,obv=obv,diff_offset=diff_offset,windows=windows)
-                #data_s  = mod.nonlinear(data=data_s)
+        data_p = mod.point_sys( data_s
+                                ,size=3
+                                )
+        data_m  = mod.ddm(  data=data_p
+                            ,diff_offset=diff_offset
+                            ,obv=obv
+                            ,diff=diff
+                            ,windows=windows
+                            )
+        data_o = nl.dual_oscillator(data=data_m
+                                    ,k1=k1
+                                    ,k2=k2
+                                    ,obv=obv
+                                    )
+        data_f = freq.fourier_analysis( comp
+                                        ,Fs
+                                        ,obv
+                                        ,data_o
+                                        )
 
-                for col in obv:
-                    data_s  = freq.get_fft( data=data_s
-                                            ,col=col
-                                            ,Fs=Fs
-                                            )
+        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(300)],columns=obv,index=[x for x in range(300)])
+        for i in obv:
+            pks,props = freq.get_angfreq_peaks(data_f,col=i)
+            pksl = list(pks)
+            if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
+            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl 
+        peaks.dropna(how='all',inplace=True)
+        peaks.fillna(0,inplace=True)
 
-                    data_s  = freq.get_ifft( data=data_s
-                                            ,col=col
-                                            ,comp=comp
-                                            )
+        plots.showplots(df1=data_f,caller='stream',figcols=figcols,obv=obv,pks=peaks,refresh=refresh) 
 
-                data_n = nl.dual_oscillator(data=data_s,k1=k1,k2=k2,obv=obv)
-                
-                figcols = ['dv1','dc1','dv2','dc2','dv3','dc3']
-                pltdta = data_s[figcols]
-                plots.showplots(df1=pltdta,caller='stream') 
-                
-                data_s = data_s.append(data.iloc[t])
+        data_s = data_f.append(data_n.iloc[t])        
 
+    print('- Backtest Complete...')
 
-            print('- Backtest Complete...')
-
-            return data_s
-            
-    except KeyboardInterrupt:
-        pass
+    return data_s
    
-def dump(data,comp,Fs,windows,obv=['dv1','dc2'],diff_offset=1,diff=1,k1=1,k2=1): 
+def dump(data,comp,Fs,windows,refresh,figcols,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1): 
 
-    data_norm = misc.normalizedf(data)
+    data_n = misc.normalizedf(data)
 
-    data_d = mod.ddm(   data=data_norm
+    data_p = mod.point_sys(data_n,size=3)
+
+    data_d = mod.ddm(   data=data_p
                         ,diff_offset=diff_offset
                         ,obv=obv
                         ,diff=diff
                         ,windows=windows
                         )
-    for col in obv:
+    data_o = nl.dual_oscillator(data=data_d
+                                ,k1=k1
+                                ,k2=k2
+                                ,obv=obv
+                                )    
+    data_f  = freq.fourier_analysis(comp
+                                    ,Fs
+                                    ,obv
+                                    ,data_o
+                                    )
 
-        data_d  = freq.get_fft( data=data_d
-                                ,col=col
-                                ,Fs=Fs
-                                )
-        data_d  = freq.get_ifft(data=data_d
-                                ,comp=comp
-                                ,col=col
-                                )
-        data_n = nl.dual_oscillator(data=data_d,k1=k1,k2=k2,obv=obv)
-
+    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(300)],columns=obv,index=[x for x in range(300)])
+    for i in obv:
+        pks,props = freq.get_angfreq_peaks(data_f,col=i)
+        pksl = list(pks)
+        if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
+        else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl 
+    peaks.dropna(how='all',inplace=True)
+    peaks.fillna(0,inplace=True)
+    
     print('- Dump Complete...')
-    fig1cols = ['dv1','dc1','dv2','dc2','dv3','dc3','dc1_ifft','dv1_ifft']
-    pltdta = data_d[fig1cols]
-    plots.showplots(df1=pltdta,caller='dump') 
+    plots.showplots(df1=data_f,caller='dump',figcols=figcols,pks=peaks,obv=obv,refresh=refresh) 
 
-    return data_d,data_n
+    return data_f

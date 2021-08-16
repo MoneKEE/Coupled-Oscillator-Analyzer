@@ -2,7 +2,7 @@ import inspect
 import numpy as np
 import pandas as pd
 
-def positions(data,signal,cross,obv=['dv1','dc1'],bt=False):
+def positions(data,signal,cross,mode,obv=['dv1','dc1']):
 
     curframe = inspect.currentframe()
     calframe = inspect.getouterframes(curframe, 2)
@@ -13,7 +13,7 @@ def positions(data,signal,cross,obv=['dv1','dc1'],bt=False):
         pass
 
     try:
-        if bt:
+        if mode == 'stream':
             data.iloc[-1,data.columns.get_loc('position')] = np.where(data.iloc[-1,data.columns.get_loc(f'ifft_{str(int(signal))}')] > data.iloc[-1,data.columns.get_loc(f'ifft_{str(int(cross))}')], 1, 0)
         else:
             data['position'] = np.where(data[f'ifft_{str(int(signal))}'] > data[f'ifft_{str(int(cross))}'], 1, 0)

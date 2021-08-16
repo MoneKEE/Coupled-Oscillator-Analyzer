@@ -1,5 +1,7 @@
 import progressbar
 import numpy as np
+import pandas as pd
+from datetime import datetime as dt
 from sklearn.metrics import mean_squared_error
 
 def get_mean_squared_error(data,comp,col):
@@ -33,3 +35,8 @@ def normalizedf(data):
     for col in data.columns:
         data[col] = data[col]/np.max(np.abs(data[col]))
     return data
+
+def serial_todt(x,format='%y/%m/%d %H'):
+    for i in range(len(x)):
+        x[i] = pd.to_datetime(x[i],format)
+    return x
