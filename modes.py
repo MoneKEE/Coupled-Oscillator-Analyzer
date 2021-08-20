@@ -26,12 +26,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         data_p = mod.point_sys( data_s.loc[row:row+timedelta(days=7),:]
                                 ,size=3
                                 )
-        data_f = freq.fourier_analysis( comp
-                                        ,Fs
-                                        ,obv
-                                        ,data_p
-                                        )
-        data_m  = mod.ddm(  data=data_f
+        data_m  = mod.ddm(  data=data_p
                             ,diff_offset=diff_offset
                             ,obv=obv
                             ,diff=diff
@@ -42,10 +37,18 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                     ,k2=k2
                                     ,obv=obv
                                     )
+    #   comp= freq.harmonics(alpha=data_o.f1_0[-1]
+    #                             ,harms=harms
+    #                             )
+        data_f = freq.fourier_analysis( comp
+                                ,Fs
+                                ,obv
+                                ,data_o
+                                )
 
         peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(1000)],columns=obv,index=[x for x in range(1000)])
         for i in obv:
-            pks,props = freq.peak_analysis(data_o,col=i)
+            pks,props = freq.peak_analysis(data_f,col=i)
             pksl = list(pks)
             if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
             else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
@@ -54,7 +57,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         pks_c = np.int0(peaks.c[peaks.c!=0])
         pks_v = np.int0(peaks.v[peaks.v!=0])
 
-        plots.showplots(df1=data_o,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
