@@ -1,15 +1,67 @@
 import nonlinear as nl
 import misc
+from datetime import timedelta
 import models as mod
 import numpy as np
 import frequencies as freq
 import pandas as pd
 import plots
+import matplotlib.pyplot as plt
+from numpy import fft
 import time
 
+def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
+    # At the start it is assumed that 
+    # N days have already been processed
+
+    data_n = misc.normalizedf(data)
+    data_s = data_n.copy()
+
+    for row in data_s.index:
+        try:
+            print(f'\n - Processing Frame #{row.value}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
+        except KeyboardInterrupt:
+            break
+
+        data_p = mod.point_sys( data_s.loc[row:row+timedelta(days=7),:]
+                                ,size=3
+                                )
+        data_f = freq.fourier_analysis( comp
+                                        ,Fs
+                                        ,obv
+                                        ,data_p
+                                        )
+        data_m  = mod.ddm(  data=data_f
+                            ,diff_offset=diff_offset
+                            ,obv=obv
+                            ,diff=diff
+                            ,windows=windows
+                            )
+        data_o = nl.dual_oscillator(data=data_m
+                                    ,k1=k1
+                                    ,k2=k2
+                                    ,obv=obv
+                                    )
+
+        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(1000)],columns=obv,index=[x for x in range(1000)])
+        for i in obv:
+            pks,props = freq.peak_analysis(data_o,col=i)
+            pksl = list(pks)
+            if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
+            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
+        peaks.dropna(how='all',inplace=True)
+        peaks.fillna(0,inplace=True)
+        pks_c = np.int0(peaks.c[peaks.c!=0])
+        pks_v = np.int0(peaks.v[peaks.v!=0])
+
+        plots.showplots(df1=data_o,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
+
+    print('- rolling backtest complete...')
+
+    return data_s
 
 
-def stream(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
+def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
     # At the start it is assumed that 
     # N days have already been processed
 
@@ -18,9 +70,8 @@ def stream(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_of
 
     for t in range(N,len(data)):
         try:
-            print('='*80)
-            print(f'- Processing Frame #{t}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
-        except:
+            print(f'\n- Processing Frame #{t}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
+        except KeyboardInterrupt:
             break
 
         data_p = mod.point_sys( data_s
@@ -32,31 +83,32 @@ def stream(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_of
                             ,diff=diff
                             ,windows=windows
                             )
-        data_o = nl.dual_oscillator(data=data_m
+        data_f = freq.fourier_analysis( comp
+                                        ,Fs
+                                        ,obv
+                                        ,data_m
+                                        )
+        data_o = nl.dual_oscillator(data=data_f
                                     ,k1=k1
                                     ,k2=k2
                                     ,obv=obv
                                     )
-        data_f = freq.fourier_analysis( comp
-                                        ,Fs
-                                        ,obv
-                                        ,data_o
-                                        )
+        
 
         peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(300)],columns=obv,index=[x for x in range(300)])
         for i in obv:
-            pks,props = freq.get_angfreq_peaks(data_f,col=i)
+            pks,props = freq.peak_analysis(data_o,col=i)
             pksl = list(pks)
             if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
             else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl 
         peaks.dropna(how='all',inplace=True)
         peaks.fillna(0,inplace=True)
 
-        plots.showplots(df1=data_f,caller='stream',figcols=figcols,obv=obv,pks=peaks,refresh=refresh) 
+        plots.showplots(df1=data_o,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks=peaks,refresh=refresh) 
 
         data_s = data_f.append(data_n.iloc[t])        
 
-    print('- Backtest Complete...')
+    print('- expanding backtest complete...')
 
     return data_s
    
@@ -71,28 +123,30 @@ def dump(data,comp,Fs,windows,refresh,figcols,obv=['v','c'],diff_offset=1,diff=1
                         ,obv=obv
                         ,diff=diff
                         ,windows=windows
-                        )
-    data_o = nl.dual_oscillator(data=data_d
-                                ,k1=k1
-                                ,k2=k2
-                                ,obv=obv
-                                )    
+                        )   
     data_f  = freq.fourier_analysis(comp
                                     ,Fs
                                     ,obv
-                                    ,data_o
+                                    ,data_d
                                     )
+    data_o = nl.dual_oscillator(data=data_f
+                                ,k1=k1
+                                ,k2=k2
+                                ,obv=obv
+                                ) 
 
-    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(300)],columns=obv,index=[x for x in range(300)])
+    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(1000)],columns=obv,index=[x for x in range(1000)])
     for i in obv:
-        pks,props = freq.get_angfreq_peaks(data_f,col=i)
+        pks,props = freq.peak_analysis(data_o,col=i)
         pksl = list(pks)
         if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
-        else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl 
+        else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
     peaks.dropna(how='all',inplace=True)
     peaks.fillna(0,inplace=True)
+    pks_c = np.int0(peaks.c[peaks.c!=0])
+    pks_v = np.int0(peaks.v[peaks.v!=0])
     
     print('- Dump Complete...')
-    plots.showplots(df1=data_f,caller='dump',figcols=figcols,pks=peaks,obv=obv,refresh=refresh) 
+    plots.showplots(df1=data_o,caller='dump',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh) 
 
     return data_f

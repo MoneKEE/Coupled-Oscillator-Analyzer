@@ -9,36 +9,38 @@ def get_data_span(asset,start,stop,interval,mode):
     pc      = cbpro.PublicClient()
     data    = pd.DataFrame()
 
-    intervals = {'days':86400,
-                'hours':3600,
-                'minutes':60}
+    intervals = {'1day':86400,
+                '6hours':21600,
+                '1hour':3600,
+                '15minutes':900,
+                '5minutes':300,
+                '1minute':60}
 
-    print('='*80)
-    print(  f'Starting {mode} run for date range {start} - {stop}'
-            ,'\n'
-            )
-    print(  '='*80
-            ,'\n'
-            )
+    print(f'\nStarting {mode} run for date range {start} - {stop} @interval={interval}\n')
 
     diff = stop - start
     d_s = diff.total_seconds()
-    terms = mt.ceil(diff.days/300)
-    if interval == 'minutes':
-        terms = mt.ceil((d_s/60)/300)
-    elif interval == 'hours':
-        terms = mt.ceil((d_s/3600)/300)
+    terms = mt.ceil((d_s/intervals[interval])/300)
+
 
     for term in range(terms):
-        if interval == 'minutes':
+        if interval == '1minute':
             strt = timedelta(minutes=300*term)
             end = timedelta(minutes=300*(term+1))
-        elif interval == 'hours':
+        elif interval == '5minutes':
+            strt = timedelta(minutes=300*term*5)
+            end = timedelta(minutes=300*(term+1)*5)
+        elif interval == '1hour':
             strt = timedelta(hours=300*term)
             end = timedelta(hours=300*(term+1))
+        elif interval == '1day':
+            strt = timedelta(hours=300*term*24)
+            end = timedelta(hours=300*(term+1)*24)
+        elif interval == '15minutes':
+            strt = timedelta(minutes=300*term*15)
+            end = timedelta(minutes=300*(term+1)*15)
         else:
-            strt = timedelta(days=300*term)
-            end = timedelta(days=300*(term+1))
+            break
 
         raw_data = pc.get_product_historic_rates(asset
                                                 ,start + strt
@@ -58,7 +60,7 @@ def get_data_span(asset,start,stop,interval,mode):
     data.drop(['t','dt'],inplace=True,axis=1)
 
     data['v']    = data['v'].round(3)
-    data         = data.iloc[:data.index.get_loc(str(stop))]
-    #print(f'\nCoinbase Data Pull| start:{data.index[0]} stop:{data.index[-1]} interval:{interval} diff:{len(data)} terms:{terms}\n')
-
+    data         = data.iloc[:data.index.get_loc(stop),:]
+    
+    print(f'\nData acquired. Total data points:{data.size}')
     return data.drop_duplicates()

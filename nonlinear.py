@@ -14,11 +14,14 @@ import models
 def dual_oscillator(data,obv=['v','c'],k1=1,k2=1):
 
     data_o = data.copy()
-    e1 = [[1],[0]]
+    e1 = [1,0]
     e2 = [0,1]
 
-    x1 = f'd{obv[0]}t_o'
-    x2 = f'd{obv[1]}t_o'
+    x1 = f'd{obv[0]}1t_o'
+    x2 = f'd{obv[1]}1t_o'
+
+    dotx1 = f'd{obv[0]}2t_oo'
+    dotx2 = f'd{obv[1]}2t_oo'
 
     #These values represent the x and y coords
     #of point 1 and point 2.
@@ -31,27 +34,55 @@ def dual_oscillator(data,obv=['v','c'],k1=1,k2=1):
     r1mag = np.sqrt(r1['e1']**2 + r1['e2']**2)
     r2mag = np.sqrt(r2['e1']**2 + r2['e2']**2)
 
-    er1 = r1.divide(r1mag,axis=0)
-    er2 = r2.divide(r2mag,axis=0)
+    c1 = 1 - (l1/r1mag)
+    c2 = 1 - (l2/r2mag)
 
-    del1 = r1mag.sub(l1)
-    del2 = r2mag.sub(l2)
+    data_o['c1'] = c1
+    data_o['c2'] = c2
 
-    f1 = -k1*er1.multiply(del1,axis=0)
-    f2 = -k2*er2.multiply(del2,axis=0)
+    f1 = data_o[dotx1].multiply(c1,axis=0) + data_o[x1].multiply(k1,axis=0) 
+    f2 = data_o[dotx2].multiply(c2,axis=0) + data_o[x2].multiply(k2,axis=0)
 
-    # # #F=MA this is the 
-    ma1 = (f1.add(f2)).dot(e1)
-    ma2 = (f1.add(f2)).dot(e2)
+    f_sys = f1.add(f2,axis=0)
+
+    data_o['f_sys'] = f_sys
+
+    # F=MA this is the 
+    ma1 = f1
+    ma2 = f2
 
     data_o['ma1'] = ma1
     data_o['ma2'] = ma2
-    
-    m1 = ma1.divide(data_o.dvt_oo,axis=0)
-    m2 = ma2.divide(data_o.dct_oo,axis=0)
+
+    m1 = f1.divide(data_o[f'd{obv[0]}3t_ooo'].add(data_o[f'd{obv[1]}3t_ooo']))
+    m2 = f2.divide(data_o[f'd{obv[0]}3t_ooo'].add(data_o[f'd{obv[1]}3t_ooo']))
 
     data_o['m1'] = m1
     data_o['m2'] = m2
+    
+    m_sys = f_sys.divide(data_o[f'd{obv[0]}3t_ooo'].add(data_o[f'd{obv[1]}3t_ooo']))
+
+    data_o['m_sys'] = m_sys
+
+    # # Momentum calculations based on the derived masses m1 and m2
+    p1 = m1.multiply(data_o[f'd{obv[0]}2t_oo'],axis=0)
+    p2 = m2.multiply(data_o[f'd{obv[1]}2t_oo'],axis=0)
+
+    data_o['p1'] = p1
+    data_o['p2'] = p2
+# 
+    dp1dt = p1-p1.shift(1)
+    dp2dt = p2-p2.shift(1) 
+
+    data_o['dp1t_o'] = dp1dt
+    data_o['dp2t_o'] = dp2dt
+
+    dp1dv = (p1-p1.shift(1)).divide(data_o[f'd{obv[0]}2t_oo']-data_o[f'd{obv[0]}2t_oo'].shift(1),axis=0)
+    dp2dv = (p2-p2.shift(1)).divide(data_o[f'd{obv[1]}2t_oo']-data_o[f'd{obv[1]}2t_oo'].shift(1),axis=0)
+
+    data_o['dp1v_o'] = dp1dv
+    data_o['dp2v_o'] = dp2dv 
+
     data_o.fillna(0,inplace=True)
 
     for col in data_o.columns:
@@ -60,6 +91,7 @@ def dual_oscillator(data,obv=['v','c'],k1=1,k2=1):
  
     data_n = misc.normalizedf(data_o)
 
+    #breakpoint()
     return data_n
 
 ################
