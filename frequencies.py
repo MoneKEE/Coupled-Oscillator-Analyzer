@@ -24,7 +24,7 @@ def fourier_analysis(comp, Fs, obv, data_s):
         data_f = data_r
     return data_f
 
-def harmonics(harms,alpha,type='harm_exp'):
+def harmonics(alpha,harms=9,type='harm_mlt'):
 # HARMONICS
     prim        = [x for x in range(2, 30) if all(x % y != 0 for y in range(2, x))]
     harm_mlt    = [x for x in range(1,10)]

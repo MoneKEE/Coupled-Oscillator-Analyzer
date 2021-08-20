@@ -62,5 +62,5 @@ def get_data_span(asset,start,stop,interval,mode):
     data['v']    = data['v'].round(3)
     data         = data.iloc[:data.index.get_loc(stop),:]
     
-    print(f'\nData acquired. Total data points:{data.size}')
+    print(f'\nData acquired. Total data points:{data.shape[0]}')
     return data.drop_duplicates()
