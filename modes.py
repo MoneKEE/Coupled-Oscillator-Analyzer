@@ -12,7 +12,7 @@ import time
 
 def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
     # At the start it is assumed that test
-    # N days have already been processed
+    # N days have already been processed tst
 
     data_n = misc.normalizedf(data)
     data_s = data_n.copy()
