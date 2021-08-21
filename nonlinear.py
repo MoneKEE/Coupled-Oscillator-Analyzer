@@ -10,7 +10,7 @@ import models
 
 # The dual oscillator attempts to model price action through
 # the motion of a two axis simple oscillator. It accepts
-# two parameters X1 and X2
+# two parameters X1 and X2 test
 def dual_oscillator(data,obv=['v','c'],k1=1,k2=1):
 
     data_o = data.copy()
