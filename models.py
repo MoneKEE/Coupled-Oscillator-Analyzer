@@ -26,7 +26,7 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         # Remove nans and infs
         if np.isinf(data_m[f'{obv[0]}{obv[i]}_c'].max()):
             data_m.replace([np.inf, -np.inf], np.nan,inplace=True)
-            data_m.fillna(data_m.data_m[f'{obv[0]}{obv[i]}_c'].max(),inplace=True)
+            data_m.fillna(data_m[f'{obv[0]}{obv[i]}_c'].max(),inplace=True)
         
     data_m.fillna(0,inplace=True)
 
@@ -41,7 +41,7 @@ def point_sys(data,obv=['c','v'],size=3):
         for o in obv:
             for i in range(1,size+1):
                 data_p[f'{o}{i}t_1'] = data_p[o] - data_p[o].shift(1)
-                data_p[f'd{o}{i}t_o'] = data_p[f'{o}{i}t_1'].divide(1)
+                data_p[f'd{o}{i}t_o'] = data_p[f'{o}{i}t_1']
                 data_p[f'{o}{i}rt_1'] = np.sqrt(data_p[f'{o}{i}t_1']**2 + i**2)
                 data_p[f'{o}{i}angt_1'] = np.arcsin(data_p[f'{o}{i}t_1'].divide(data_p[f'{o}{i}rt_1']))
                 if i > 1:

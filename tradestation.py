@@ -28,9 +28,8 @@ def main(argv):
     Fs          = round(1/sr,3)
     diff_offset = 1
     diff        = 1
-    k1          = 0.1
-    k2          = 0.1
-    refresh     = 0.01
+    m           = 1
+    refresh     = 0.04
     windows     = [24,24*7,24*30]
     start       = dt(2018,1,1,0,0,0); stop = dt(2018,2,1,00,00,00)
     asset       = 'ETH-USD'
@@ -54,36 +53,33 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:h:s:a:k1:k2:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','k1=','k2='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:p:s:a:w:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','mass='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -i <interval> -h <harmonics> -s <sampling rate> -a alpha -1 <damping ratio 1> -2 <damping ratio 2>')
+        print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -hr <harmonics> -sr <sampling rate> -a <alpha> -k1 <damping ratio 1> -k2 <damping ratio 2>')
+            print('tradestation.py -m <mode> -p <periods> -sr <sampling rate> -a <alpha> -w <system mass>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
         elif opt in ('-i','int'):
             interval = arg
-        elif opt in ('-h','harms'):
-            harms = arg
+        elif opt in ('-p','periods'):
+            harms = int(arg)
         elif opt in ('-s', 'sr'):
-            sr = arg
+            sr = float(arg)
             Fs = round(1/float(sr),3)
         elif opt in ('-a','alpha'):
-            alpha = arg
-        elif opt in ('-1', 'k2'):
-            k1 = arg
-        elif opt in ('-2', 'k1'):
-            k2 = arg
+            alpha = int(arg)
+        elif opt in ('-w', 'mass'):
+            m = float(arg)
         elif opt in ('-f', 'from'):
             start = pd.to_datetime(arg)
         elif opt in ('-t', 'thru'):
             stop = pd.to_datetime(arg)
 
-    #breakpoint()
     comp        = freq.harmonics(harms=harms
                                 ,alpha=alpha
                                 ,type='harm_mlt'
@@ -112,8 +108,7 @@ def main(argv):
                             ,Fs=Fs
                             ,refresh=refresh
                             ,figcols=figcols
-                            ,k1=1
-                            ,k2=1
+                            ,m=1
                             ,mode=mode
                             ,windows=windows
                             ,N=N
@@ -128,8 +123,7 @@ def main(argv):
                             ,Fs=Fs
                             ,refresh=refresh
                             ,figcols=figcols
-                            ,k1=1
-                            ,k2=1
+                            ,m=1
                             ,mode=mode
                             ,windows=windows
                             ,N=N
@@ -143,8 +137,7 @@ def main(argv):
                             ,Fs=Fs
                             ,windows=windows
                             ,refresh=refresh
-                            ,k1=1
-                            ,k2=1
+                            ,m=1
                             ,obv=obv
                             ,figcols=figcols
                             )
