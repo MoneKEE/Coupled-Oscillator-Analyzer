@@ -1,6 +1,5 @@
 import numpy as np
 import math as mt
-import matplotlib.pyplot as plt
 import inspect
 from scipy.signal import find_peaks, spectrogram
 
