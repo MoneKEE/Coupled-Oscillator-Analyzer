@@ -5,6 +5,8 @@ from datetime import datetime as dt
 def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
     data_m = data.copy()
 
+    um = 1/len(data_m)
+
     print('- Creating addtional features...\n')
 
     for i in range(1,len(obv)):
@@ -13,7 +15,8 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         data_m[f'{obv[0]}{obv[i]}_pwr'] = data_m[f'd{obv[0]}1t_o'] * data_m[f'd{obv[i]}1t_o']
         data_m[f'{obv[0]}{obv[i]}_r'] = data_m[f'd{obv[0]}1t_o'].divide(data_m[f'd{obv[i]}1t_o'])
         data_m[f'{obv[0]}{obv[i]}_c'] = data_m[f'd{obv[i]}1t_o'].divide(data_m[f'd{obv[0]}1t_o'])
-        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'] > 0,1,0)
+
+        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'] > data_m[f'd{obv[i]}1t_o'].mean()+data_m[f'd{obv[i]}1t_o'].std(),1,0)
 
         data_m.fillna(0,inplace=True)
 
@@ -26,7 +29,7 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         # Remove nans and infs
         if np.isinf(data_m[f'{obv[0]}{obv[i]}_c'].max()):
             data_m.replace([np.inf, -np.inf], np.nan,inplace=True)
-            data_m.fillna(data_m.data_m[f'{obv[0]}{obv[i]}_c'].max(),inplace=True)
+            data_m.fillna(data_m[f'{obv[0]}{obv[i]}_c'].max(),inplace=True)
         
     data_m.fillna(0,inplace=True)
 
@@ -41,7 +44,7 @@ def point_sys(data,obv=['c','v'],size=3):
         for o in obv:
             for i in range(1,size+1):
                 data_p[f'{o}{i}t_1'] = data_p[o] - data_p[o].shift(1)
-                data_p[f'd{o}{i}t_o'] = data_p[f'{o}{i}t_1'].divide(1)
+                data_p[f'd{o}{i}t_o'] = data_p[f'{o}{i}t_1']
                 data_p[f'{o}{i}rt_1'] = np.sqrt(data_p[f'{o}{i}t_1']**2 + i**2)
                 data_p[f'{o}{i}angt_1'] = np.arcsin(data_p[f'{o}{i}t_1'].divide(data_p[f'{o}{i}rt_1']))
                 if i > 1:

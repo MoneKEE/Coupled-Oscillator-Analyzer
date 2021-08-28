@@ -41,8 +41,8 @@ def get_angfreq(data,Fs,col):
 
     data_f[f'{col}_fft']    = np.fft.fft(np.asarray(data_f[f'd{col}1t_o'].tolist()))
     data_f[f'{col}f_rad']   = np.sqrt(np.real(data_f[f'{col}_fft'])**2 + np.imag(data_f[f'{col}_fft'])**2)
-    data_f[f'{col}f_theta'] = np.angle(data_f[f'{col}_fft'])
-    data_f[f'{col}f_w']     = data_f[f'{col}f_theta'] - data_f[f'{col}f_theta'].shift(1)
+    data_f[f'{col}f_ang']   = np.arctan(np.imag(data_f[f'{col}_fft'])/np.real(data_f[f'{col}_fft']))
+    data_f[f'{col}f_w']     = data_f[f'{col}f_ang'] - data_f[f'{col}f_ang'].shift(1)
     
     fft_freq = np.fft.fftfreq(len(data_f),d=1/Fs)
     data_f['fft_freq'] = fft_freq
@@ -69,14 +69,14 @@ def get_tfreq(data,comp,col):
 
     fft_list = np.asarray(data_i[f'd{col}1t_o'].tolist())
 
-    data_i[f'{col}f_t'] = np.real(np.fft.ifft(np.copy(fft_list)))
+    data_i[f'{col}f_t'] = np.fft.ifft(np.copy(fft_list))
 
     _num_ = 0
     for num_ in comp:
         bnd                     = num_
         fft_listm10             = np.copy(fft_list)
         fft_listm10[bnd:-bnd]   = 0
-        data_i[f'{col}f_t'+str(bnd)]  =np.real(np.fft.ifft(fft_listm10))
+        data_i[f'{col}f_t'+str(bnd)]  =np.fft.ifft(fft_listm10)
         _num_                   = bnd
 
     data_i.fillna(0,inplace=True)

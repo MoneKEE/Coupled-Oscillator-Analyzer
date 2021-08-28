@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from numpy import fft
 import time
 
-def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
-    # At the start it is assumed that 
-    # N days have already been processed
+def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+    # At the start it is assumed that test
+    # N days have already been processed tst
 
     data_n = misc.normalizedf(data)
     data_s = data_n.copy()
@@ -23,7 +23,14 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         except KeyboardInterrupt:
             break
 
-        data_p = mod.point_sys( data_s.loc[row:row+timedelta(days=7),:]
+        data_i = data_s.loc[row:row+timedelta(days=N),:]
+
+        T = len(data_i)/Fs
+        df = round(1/T,3)
+        dw = round((2*np.pi)/T,3)
+        ny = round((dw*len(data_i))/2,3)
+
+        data_p = mod.point_sys( data=data_i
                                 ,size=3
                                 )
         data_m  = mod.ddm(  data=data_p
@@ -33,20 +40,16 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                             ,windows=windows
                             )
         data_o = nl.dual_oscillator(data=data_m
-                                    ,k1=k1
-                                    ,k2=k2
+                                    ,m=m
                                     ,obv=obv
                                     )
-    #   comp= freq.harmonics(alpha=data_o.f1_0[-1]
-    #                             ,harms=harms
-    #                             )
         data_f = freq.fourier_analysis( comp
                                 ,Fs
                                 ,obv
                                 ,data_o
                                 )
 
-        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(1000)],columns=obv,index=[x for x in range(1000)])
+        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
         for i in obv:
             pks,props = freq.peak_analysis(data_f,col=i)
             pksl = list(pks)
@@ -57,14 +60,14 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         pks_c = np.int0(peaks.c[peaks.c!=0])
         pks_v = np.int0(peaks.v[peaks.v!=0])
 
-        plots.showplots(df1=data_f,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
     return data_s
 
 
-def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1,N=7):
+def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that 
     # N days have already been processed
 
@@ -92,22 +95,22 @@ def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                         ,data_m
                                         )
         data_o = nl.dual_oscillator(data=data_f
-                                    ,k1=k1
-                                    ,k2=k2
+                                    ,m=m
                                     ,obv=obv
                                     )
         
-
-        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(300)],columns=obv,index=[x for x in range(300)])
+        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
         for i in obv:
             pks,props = freq.peak_analysis(data_o,col=i)
             pksl = list(pks)
             if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
-            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl 
+            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
         peaks.dropna(how='all',inplace=True)
         peaks.fillna(0,inplace=True)
+        pks_c = np.int0(peaks.c[peaks.c!=0])
+        pks_v = np.int0(peaks.v[peaks.v!=0])
 
-        plots.showplots(df1=data_o,caller='stream',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks=peaks,refresh=refresh) 
+        plots.showplots(df1=data_o,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)  
 
         data_s = data_f.append(data_n.iloc[t])        
 
@@ -115,7 +118,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
 
     return data_s
    
-def dump(data,comp,Fs,windows,refresh,figcols,obv=['v','c'],diff_offset=1,diff=1,k1=1,k2=1): 
+def dump(data,comp,Fs,windows,refresh,figcols,m=1,obv=['v','c'],diff_offset=1,diff=1): 
 
     data_n = misc.normalizedf(data)
 
@@ -133,12 +136,11 @@ def dump(data,comp,Fs,windows,refresh,figcols,obv=['v','c'],diff_offset=1,diff=1
                                     ,data_d
                                     )
     data_o = nl.dual_oscillator(data=data_f
-                                ,k1=k1
-                                ,k2=k2
+                                ,m=m
                                 ,obv=obv
                                 ) 
 
-    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(1000)],columns=obv,index=[x for x in range(1000)])
+    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
     for i in obv:
         pks,props = freq.peak_analysis(data_o,col=i)
         pksl = list(pks)
@@ -150,6 +152,8 @@ def dump(data,comp,Fs,windows,refresh,figcols,obv=['v','c'],diff_offset=1,diff=1
     pks_v = np.int0(peaks.v[peaks.v!=0])
     
     print('- Dump Complete...')
-    plots.showplots(df1=data_o,caller='dump',k1=k1,k2=k2,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh) 
+    plots.showplots(df1=data_o,caller='dump',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh) 
 
-    return data_f
+    breakpoint()
+
+    return data_o

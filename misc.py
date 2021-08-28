@@ -34,6 +34,7 @@ def normalizedf(data):
     #Normalize the values
     for col in data.columns:
         data[col] = data[col]/np.max(np.abs(data[col]))
+        data[col] = round(data[col],3)
     return data
 
 def serial_todt(x,format='%y/%m/%d %H'):
