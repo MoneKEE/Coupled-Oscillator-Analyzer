@@ -53,14 +53,14 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:p:s:a:w:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','mass='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:p:s:a:w:n:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','mass=','win='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass>')
+        print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -p <periods> -sr <sampling rate> -a <alpha> -w <system mass>')
+            print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
@@ -79,6 +79,8 @@ def main(argv):
             start = pd.to_datetime(arg)
         elif opt in ('-t', 'thru'):
             stop = pd.to_datetime(arg)
+        elif opt in ('-n', 'win'):
+            N = int(arg)
 
     comp        = freq.harmonics(harms=harms
                                 ,alpha=alpha
@@ -108,7 +110,7 @@ def main(argv):
                             ,Fs=Fs
                             ,refresh=refresh
                             ,figcols=figcols
-                            ,m=1
+                            ,m=m
                             ,mode=mode
                             ,windows=windows
                             ,N=N
@@ -123,7 +125,7 @@ def main(argv):
                             ,Fs=Fs
                             ,refresh=refresh
                             ,figcols=figcols
-                            ,m=1
+                            ,m=m
                             ,mode=mode
                             ,windows=windows
                             ,N=N
@@ -137,7 +139,7 @@ def main(argv):
                             ,Fs=Fs
                             ,windows=windows
                             ,refresh=refresh
-                            ,m=1
+                            ,m=m
                             ,obv=obv
                             ,figcols=figcols
                             )

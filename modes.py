@@ -23,7 +23,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         except KeyboardInterrupt:
             break
 
-        data_i = data_s.loc[row:row+timedelta(days=7),:]
+        data_i = data_s.loc[row:row+timedelta(days=N),:]
 
         T = len(data_i)/Fs
         df = round(1/T,3)

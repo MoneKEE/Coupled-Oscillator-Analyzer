@@ -54,17 +54,23 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     k1 = m*w1_n**2
     k2 = m*w2_n**2
 
-    ma1 = -(al1*k1+al2*k2)*data_o[x1] - al1*k1*l1
-    ma2 = -(al2*k2+al1*k1)*data_o[x2] - al2*k2*l2
+    ma1 = -(al1*k1)*data_o[dotx1] - al2*k2*data_o[x1]
+    ma2 = -(al2*k2)*data_o[dotx2] - al1*k1*data_o[x2]
 
-    a1 = ma1/m
-    a2 = ma2/m
+    ac1 = ma1/m
+    ac2 = ma2/m
 
     data_o['k1'] = k1
     data_o['k2'] = k2
 
-    data_o['a1'] = a1
-    data_o['a2'] = a2
+    c1 = al1*k1
+    c2 = al2*k2
+
+    data_o['c1'] = c1
+    data_o['c2'] = c2
+
+    data_o['ac1'] = ac1
+    data_o['ac2'] = ac2
 
     data_o['ma1'] = ma1
     data_o['ma2'] = ma2
@@ -85,8 +91,8 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['dp1t_o'] = dp1dt
     data_o['dp2t_o'] = dp2dt
 
-    dp1dv = (p1-p1.shift(1)).divide(data_o[dotx1]-data_o[dotx1].shift(1),axis=0)
-    dp2dv = (p2-p2.shift(1)).divide(data_o[dotx2]-data_o[dotx2].shift(1),axis=0)
+    dp1dv = (p1-p1.shift(1)).divide(data_o[ddotx1],axis=0)
+    dp2dv = (p2-p2.shift(1)).divide(data_o[ddotx2],axis=0)
 
     data_o['dp1v_o'] = dp1dv
     data_o['dp2v_o'] = dp2dv 
@@ -94,6 +100,22 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['w1_n'] = w1_n
     data_o['w2_n'] = w2_n
 
+    # Energy Profile
+    PE1 = 0.5*k1*(data_o[x1]**2+data_o[x2]**2)
+    KE1 = 0.5*m*(data_o[dotx1]**2+data_o[dotx2]**2)
+    TE1 = PE1 + KE1
+    
+    data_o['PE1'] = PE1
+    data_o['KE1'] = KE1
+    data_o['TE1'] = TE1
+
+    PE2 = 0.5*k2*(data_o[x2]**2+data_o[x2]**2)
+    KE2 = 0.5*m*(data_o[dotx2]**2+data_o[dotx2]**2)
+    TE2 = PE2 + KE2
+    
+    data_o['PE2'] = PE2
+    data_o['KE2'] = KE2
+    data_o['TE2'] = TE2
     # temporal natural freq
     fr1_0 = w1_n/(2*np.pi)
     fr2_0 = w2_n/(2*np.pi)
@@ -102,11 +124,11 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['fr2_0'] = fr2_0
 
     # damping ratio
-    # dr1 = c1.divide(2*np.sqrt(m*k1),axis=0)
-    # dr2 = c2.divide(2*np.sqrt(m*k2),axis=0)
+    dr1 = c1.divide(2*np.sqrt(m*k1),axis=0)
+    dr2 = c2.divide(2*np.sqrt(m*k2),axis=0)
 
-    # data_o['dr1'] = dr1
-    # data_o['dr2'] = dr2
+    data_o['dr1'] = dr1
+    data_o['dr2'] = dr2
 
     # anguluar freq
     # w1 = w1_0.multiply(np.sqrt(1-dr1),axis=0)

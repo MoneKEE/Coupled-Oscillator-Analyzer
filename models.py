@@ -5,6 +5,8 @@ from datetime import datetime as dt
 def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
     data_m = data.copy()
 
+    um = 1/len(data_m)
+
     print('- Creating addtional features...\n')
 
     for i in range(1,len(obv)):
@@ -13,7 +15,8 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         data_m[f'{obv[0]}{obv[i]}_pwr'] = data_m[f'd{obv[0]}1t_o'] * data_m[f'd{obv[i]}1t_o']
         data_m[f'{obv[0]}{obv[i]}_r'] = data_m[f'd{obv[0]}1t_o'].divide(data_m[f'd{obv[i]}1t_o'])
         data_m[f'{obv[0]}{obv[i]}_c'] = data_m[f'd{obv[i]}1t_o'].divide(data_m[f'd{obv[0]}1t_o'])
-        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'] > 0,1,0)
+
+        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'] > data_m[f'd{obv[i]}1t_o'].mean()+data_m[f'd{obv[i]}1t_o'].std(),1,0)
 
         data_m.fillna(0,inplace=True)
 
