@@ -124,8 +124,8 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['fr2_0'] = fr2_0
 
     # damping ratio
-    dr1 = c1.divide(2*np.sqrt(m*k1),axis=0)
-    dr2 = c2.divide(2*np.sqrt(m*k2),axis=0)
+    dr1 = a1k1.divide(2*np.sqrt(m*k1),axis=0)
+    dr2 = a2k2.divide(2*np.sqrt(m*k2),axis=0)
 
     data_o['dr1'] = dr1
     data_o['dr2'] = dr2

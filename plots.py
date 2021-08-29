@@ -101,6 +101,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         ax11 = plt.subplot2grid((gx,gy),(3*(s1x+s1rs+1),s1y+s1cs+1),rowspan=s4rs,colspan=s1cs)
         ax11.plot_date(dates_idx,df1[['TE1']],label='TE1',xdate=True,linestyle='dotted',linewidth=1,fmt='')
         ax11.plot_date(dates_idx,df1[['TE2']],label='TE2',xdate=True,linestyle='dotted',linewidth=1,fmt='')
+        ax11.plot_date(dates_idx,df1[['idposc']],label='idposc',xdate=True,linestyle='dotted',linewidth=1,fmt='')
         ax11.legend(loc='upper left')
 
         #SECTION 5: PHASE ANGLE PLOTS
