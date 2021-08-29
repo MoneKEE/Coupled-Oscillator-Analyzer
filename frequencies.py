@@ -14,7 +14,7 @@ def fourier_analysis(comp, Fs, obv, data_s):
 
     for col in obv:
         # Need to figure out how best to use this!!!!!!!!
-        freqs,times,spectro = spectrogram(data_f[f'd{col}1t_o'])
+        #freqs,times,spectro = spectrogram(data_f[f'd{col}1t_o'])
 
         data_af  = get_angfreq(  data=data_f
                                 ,col=col

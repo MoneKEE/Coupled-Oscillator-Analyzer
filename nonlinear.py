@@ -63,11 +63,11 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['k1'] = k1
     data_o['k2'] = k2
 
-    c1 = al1*k1
-    c2 = al2*k2
+    a1k1 = al1*k1
+    a2k2 = al2*k2
 
-    data_o['c1'] = c1
-    data_o['c2'] = c2
+    data_o['a1k1'] = a1k1
+    data_o['a2k2'] = a2k2
 
     data_o['ac1'] = ac1
     data_o['ac2'] = ac2

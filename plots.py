@@ -38,7 +38,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
             
         #SECTION 1: ROWS:3 COLUMNS:10 V signal PLOTS
         df_v3 = df1[['ma1']]
-        df_v2 = df1[['c1']]
+        df_v2 = df1[['a1k1']]
 
         ax1 = plt.subplot2grid((gx,gy),(s1x,s1y),rowspan=s1rs,colspan=s1cs)
         ax1.plot_date(dates_idx,df1['dv1t_o'],xdate=True,linestyle='-',fmt='',label='dv1t_o')
@@ -58,7 +58,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         
         #SECTION 2: ROWS:3 COLUMNS:10 C signal PLOTS
         df_c3 = df1[['ma2']]
-        df_c2 = df1[['c2']]
+        df_c2 = df1[['a2k2']]
 
         ax4 = plt.subplot2grid((gx,gy),(s1x,s1y+s1cs+1),rowspan=s2rs,colspan=s2cs)
         ax4.plot_date(dates_idx,df1[f'd{obv[1]}1t_o'],xdate=True,linestyle='-',fmt='',label=f'd{obv[1]}1t_o')
