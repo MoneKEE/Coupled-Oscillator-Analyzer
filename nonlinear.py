@@ -39,7 +39,7 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     # er1 = r1.divide(r1mag,axis=0)
     # er2 = r2.divide(r2mag,axis=0)
 
-    # del1 = r1mag - l1
+    del1 = r1mag - l1
     # del2 = r2mag - l2
 
     al1 = 1 - (l1/r1mag)
