@@ -33,8 +33,8 @@ def main(argv):
     windows     = [24,24*7,24*30]
     start       = dt(2018,1,1,0,0,0); stop = dt(2018,2,1,00,00,00)
     asset       = 'ETH-USD'
-    interval    = '15minutes'
-    mode        = 'stream_r'
+    interval    = '5minutes'
+    mode        = 'dump'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
                     ,'dv2t_oo','dc2t_oo'

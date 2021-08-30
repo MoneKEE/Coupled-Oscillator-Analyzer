@@ -1,8 +1,7 @@
 import numpy as np
 import math as mt
-import matplotlib.pyplot as plt
 import inspect
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, spectrogram
 
 def fourier_analysis(comp, Fs, obv, data_s):
     data_f = data_s.copy()
@@ -13,6 +12,9 @@ def fourier_analysis(comp, Fs, obv, data_s):
     ny = (dw*len(data_s))/2
 
     for col in obv:
+        # Need to figure out how best to use this!!!!!!!!
+        #freqs,times,spectro = spectrogram(data_f[f'd{col}1t_o'])
+
         data_af  = get_angfreq(  data=data_f
                                 ,col=col
                                 ,Fs=Fs

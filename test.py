@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 from datetime import datetime as dt
-#import datacapture as dc#
+import datacapture as dc
 import models as mod
 import misc
 
@@ -26,3 +26,6 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),interval='hours
     data_n      = misc.normalizedf(data=data_m)
     data_o      = data_n.copy()
     return data_o
+
+    if __name__ == '__main__':
+        testbed() 

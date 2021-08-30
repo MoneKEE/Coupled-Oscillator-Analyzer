@@ -38,7 +38,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
             
         #SECTION 1: ROWS:3 COLUMNS:10 V signal PLOTS
         df_v3 = df1[['ma1']]
-        df_v2 = df1[['c1']]
+        df_v2 = df1[['a1k1']]
 
         ax1 = plt.subplot2grid((gx,gy),(s1x,s1y),rowspan=s1rs,colspan=s1cs)
         ax1.plot_date(dates_idx,df1['dv1t_o'],xdate=True,linestyle='-',fmt='',label='dv1t_o')
@@ -58,7 +58,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         
         #SECTION 2: ROWS:3 COLUMNS:10 C signal PLOTS
         df_c3 = df1[['ma2']]
-        df_c2 = df1[['c2']]
+        df_c2 = df1[['a2k2']]
 
         ax4 = plt.subplot2grid((gx,gy),(s1x,s1y+s1cs+1),rowspan=s2rs,colspan=s2cs)
         ax4.plot_date(dates_idx,df1[f'd{obv[1]}1t_o'],xdate=True,linestyle='-',fmt='',label=f'd{obv[1]}1t_o')
@@ -101,14 +101,17 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         ax11 = plt.subplot2grid((gx,gy),(3*(s1x+s1rs+1),s1y+s1cs+1),rowspan=s4rs,colspan=s1cs)
         ax11.plot_date(dates_idx,df1[['TE1']],label='TE1',xdate=True,linestyle='dotted',linewidth=1,fmt='')
         ax11.plot_date(dates_idx,df1[['TE2']],label='TE2',xdate=True,linestyle='dotted',linewidth=1,fmt='')
+        ax11.plot_date(dates_idx,df1[['idposc']],label='idposc',xdate=True,linestyle='dotted',linewidth=1,fmt='')
         ax11.legend(loc='upper left')
 
         #SECTION 5: PHASE ANGLE PLOTS
         ax12 = plt.subplot2grid((gx,gy),(2*(s1x+s1rs+1)+1,(s1y+s1cs+1)*2),rowspan=s5rs,colspan=s1cs,projection='polar',)
         # ax12.plot(np.rad2deg(df1['vf_w'][np.abs(df1['vf_rad']) > 2*df1.vf_rad.std()]),df1['vf_rad'][np.abs(df1['vf_rad']) > 2*df1.vf_rad.std()],color='c',label='vf_w',marker='^',markersize=6,linestyle='none') 
         # ax12.plot(np.rad2deg(df1['cf_w'][np.abs(df1['cf_rad']) > 2*df1.cf_rad.std()]),df1['cf_rad'][np.abs(df1['cf_rad']) > 2*df1.cf_rad.std()],color='g',label='cf_w',marker='o',markersize=6,linestyle='none')
-        ax12.plot(np.rad2deg(df1['w1_n']),df1['dv1t_o'],label='v1-w1_n',marker='^',markersize=6,linestyle='none') 
-        ax12.plot(np.rad2deg(df1['w2_n']),df1['dc1t_o'],label='c1-w2_n',marker='o',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.dc1t_o/df1.dv1t_o)),np.sqrt(df1.dc1t_o**2+df1.dv1t_o**2),label='Px',marker='^',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.ma2/df1.ma1)),np.sqrt(df1.ma1**2+df1.ma2**2),label='Fx',marker='^',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1)),np.sqrt(df1.a1k1**2+df1.a2k2**2),label='AKx',marker='^',markersize=6,linestyle='none') 
+        #ax12.plot(np.rad2deg(df1['w2_n']),df1['dc1t_o'],label='c1-w2_n',marker='o',markersize=6,linestyle='none')
         ax12.legend(loc='upper left')
 
         if caller == 'dump':
@@ -116,13 +119,6 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         else:
             plt.pause(refresh)
             plt.clf()
-            
-            
-###################################################
-#TEST BED
-###################################################
-# import test
-# data_o = test.testbed(start=dt(2018,1,1),stop=dt(2018,2,1))
-# showplots(data_o)
+
 
 
