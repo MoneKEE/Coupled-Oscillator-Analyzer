@@ -40,7 +40,7 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     # er2 = r2.divide(r2mag,axis=0)
 
     del1 = r1mag - l1
-    # del2 = r2mag - l2
+    del2 = r2mag - l2
 
     al1 = 1 - (l1/r1mag)
     al2 = 1 - (l2/r2mag)
@@ -101,17 +101,17 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['w2_n'] = w2_n
 
     # Energy Profile
-    PE1 = 0.5*k1*(data_o[x1]**2+data_o[x2]**2)
+    PE1 = 0.5*k1*(del1**2)
     KE1 = 0.5*m*(data_o[dotx1]**2+data_o[dotx2]**2)
-    TE1 = PE1 + KE1
+    TE1 = KE1-PE1
     
     data_o['PE1'] = PE1
     data_o['KE1'] = KE1
     data_o['TE1'] = TE1
 
-    PE2 = 0.5*k2*(data_o[x2]**2+data_o[x2]**2)
-    KE2 = 0.5*m*(data_o[dotx2]**2+data_o[dotx2]**2)
-    TE2 = PE2 + KE2
+    PE2 = 0.5*k2*(del2**2)
+    KE2 = 0.5*m*(data_o[dotx1]**2+data_o[dotx2]**2)
+    TE2 = KE2-PE2
     
     data_o['PE2'] = PE2
     data_o['KE2'] = KE2
