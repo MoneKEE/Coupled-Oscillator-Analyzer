@@ -131,32 +131,32 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     data_o['dr2'] = dr2
 
     # anguluar freq
-    # w1 = w1_0.multiply(np.sqrt(1-dr1),axis=0)
-    # w2 = w2_0.multiply(np.sqrt(1-dr2),axis=0)
+    w1 = w1_n.multiply(np.sqrt(1-dr1),axis=0)
+    w2 = w2_n.multiply(np.sqrt(1-dr2),axis=0)
 
-    # data_o['w1'] = w1
-    # data_o['w2'] = w2
+    data_o['w1'] = w1
+    data_o['w2'] = w2
 
     # temporal freq
-    # fr1 = w1/(2*np.pi)
-    # fr2 = w2/(2*np.pi)
+    fr1 = w1/(2*np.pi)
+    fr2 = w2/(2*np.pi)
 
-    # data_o['f1r'] = fr1
-    # data_o['fr2'] = fr2
+    data_o['f1r'] = fr1
+    data_o['fr2'] = fr2
 
     # exponential decay
-    # lmda1 = w1_0.multiply(dr1,axis=0)
-    # lmda2 = w2_0.multiply(dr2,axis=0)
+    lmda1 = w1_n.multiply(dr1,axis=0)
+    lmda2 = w2_n.multiply(dr2,axis=0)
 
-    # data_o['lmda1'] = lmda1
-    # data_o['lmda2'] = lmda2
+    data_o['lmda1'] = lmda1
+    data_o['lmda2'] = lmda2
 
     # Q factor
-    # q1 = (2*dr1)**-1
-    # q2 = (2*dr2)**-1
+    q1 = (2*dr1)**-1
+    q2 = (2*dr2)**-1
 
-    # data_o['q1'] = q1
-    # data_o['q2'] = q2
+    data_o['q1'] = q1
+    data_o['q2'] = q2
 
     data_o.fillna(0,inplace=True)
 
