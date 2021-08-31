@@ -57,6 +57,18 @@ def dual_oscillator(data,obv=['v','c'],m=1):
     ma1 = -(al1*k1)*data_o[dotx1] - al2*k2*data_o[x1]
     ma2 = -(al2*k2)*data_o[dotx2] - al1*k1*data_o[x2]
 
+    ft1 = m*data_o[ddotx1] + al1*k1*data_o[dotx1] + al2*k2*data_o[x1]
+    ft2 = -m*data_o[ddotx2] + al2*k2*data_o[dotx2] + al1*k1*data_o[x2]
+
+    ftm = np.sqrt(ft1**2+ft2**2)
+    fta = np.arctan(ft2/ft1)
+
+    data_o['ft1'] = ft1
+    data_o['ft2'] = ft2
+
+    data_o['ftm'] = ftm
+    data_o['fta'] = fta
+
     ac1 = ma1/m
     ac2 = ma2/m
 
