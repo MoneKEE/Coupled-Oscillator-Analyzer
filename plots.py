@@ -52,7 +52,7 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
 
         ax2 = plt.subplot2grid((gx,gy),(s1x+s1rs+1,s1y),rowspan=s1rs,colspan=s1cs)
         ax2.plot_date(dates_idx,df1[f'd{obv[0]}2t_oo'],xdate=False,linestyle='-',fmt='',label=f'd{obv[0]}2t_oo')
-        ax2.plot_date(dates_idx,df_v2,xdate=False,color=='g',linestyle='dotted',fmt='',linewidth=0.5,label='a1k1')
+        ax2.plot_date(dates_idx,df_v2,xdate=False,color='g',linestyle='dotted',fmt='',linewidth=0.5,label='a1k1')
         ax2.legend(loc='lower right')
 
         ax3 = plt.subplot2grid((gx,gy),(2*(s1x+s1rs+1),s1y),rowspan=s1rs,colspan=s1cs)
