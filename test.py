@@ -22,7 +22,10 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='
                                 ,mode=mode
                                 ) 
     data_n      = misc.normalizedf(data=df_master.copy())
-    data_m      = mod.ddm(  data=data_n
+    data_p      = mod.point_sys(data_n,size=3)
+    data_m      = mod.ddm(  data=data_p
+                            ,diff=1
+                            ,diff_offset=1
                             ,obv=obv
                             ,windows=windows
                             )
@@ -31,9 +34,9 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='
                                 ,type='harm_mlt'
                                 )
     data_f      = freq.fourier_analysis( comp
-                                        ,Fs=Fs
-                                        ,obv=obv
-                                        ,data=data_m
+                                        ,Fs
+                                        ,obv
+                                        ,data_m
                                         )
     data_o      = nl.dual_oscillator(data=data_f
                                     ,m=1

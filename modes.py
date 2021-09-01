@@ -44,7 +44,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                 ,obv
                                 ,data_o
                                 )
-        plots.showplots(df1=data_f,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',Fs=Fs,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
@@ -83,7 +83,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        plots.showplots(df1=data_o,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh)  
+        plots.showplots(df1=data_o,caller='stream',Fs=Fs,obv=obv,refresh=refresh)  
 
         data_s = data_f.append(data_n.iloc[t])        
 
@@ -113,7 +113,7 @@ def dump(data,comp,Fs,windows,refresh,figcols,m=1,obv=['v','c'],diff_offset=1,di
                                 ,m=m
                                 ,obv=obv
                                 )
-    plots.showplots(df1=data_o,caller='dump',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh) 
+    plots.showplots(df1=data_o,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
 
     print('- Dump Complete...')
 

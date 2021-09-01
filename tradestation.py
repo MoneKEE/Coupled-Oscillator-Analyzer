@@ -109,7 +109,7 @@ def main(argv):
                             ,harms=harms
                             ,Fs=Fs
                             ,refresh=refresh
-                            ,figcols=figcols
+                            
                             ,m=m
                             ,mode=mode
                             ,windows=windows
@@ -124,7 +124,7 @@ def main(argv):
                             ,harms=harms
                             ,Fs=Fs
                             ,refresh=refresh
-                            ,figcols=figcols
+                            
                             ,m=m
                             ,mode=mode
                             ,windows=windows
@@ -141,7 +141,7 @@ def main(argv):
                             ,refresh=refresh
                             ,m=m
                             ,obv=obv
-                            ,figcols=figcols
+                            
                             )
 
 
