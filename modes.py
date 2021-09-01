@@ -42,6 +42,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         data_o = nl.dual_oscillator(data=data_m
                                     ,m=m
                                     ,obv=obv
+                                    ,Fs=Fs
                                     )
         data_f = freq.fourier_analysis( comp
                                 ,Fs
@@ -97,6 +98,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
         data_o = nl.dual_oscillator(data=data_f
                                     ,m=m
                                     ,obv=obv
+                                    ,Fs=Fs
                                     )
         
         peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
@@ -136,6 +138,7 @@ def dump(data,comp,Fs,windows,refresh,figcols,m=1,obv=['v','c'],diff_offset=1,di
                                     ,data_d
                                     )
     data_o = nl.dual_oscillator(data=data_f
+                                ,Fs=Fs
                                 ,m=m
                                 ,obv=obv
                                 ) 

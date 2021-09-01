@@ -84,11 +84,17 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
         ax7.plot(df1[{f'd{obv[0]}1t_o'}],df1[f'd{obv[1]}1t_o'],color='m',linestyle='None',marker='o',label=f'd{obv[0]}1t_o-d{obv[1]}1t_o')
         ax7.plot(df1.iloc[int(len(df1)/2):-1,df1.columns.get_loc(f'd{obv[0]}1t_o')],df1.iloc[int(len(df1)/2):-1,df1.columns.get_loc(f'd{obv[1]}1t_o')],color='b',linestyle='None',marker='o')
         ax7.plot(df1.iloc[-len(df1)//6:,df1.columns.get_loc(f'd{obv[0]}1t_o')],df1.iloc[-len(df1)//6:,df1.columns.get_loc(f'd{obv[1]}1t_o')],color='c',linestyle='None',marker='o')
-        ax7.plot(df1.iloc[-1,df1.columns.get_loc(f'd{obv[0]}1t_o')],df1.iloc[-1,df1.columns.get_loc(f'd{obv[1]}1t_o')],color='g',linestyle='None',marker='o')
         ax7.plot(df1.dv1t_o.mean(),df1.dc1t_o.mean(),color='r',linestyle='None',marker='o')
+        ax7.plot(df1.dv1t_o[-1],df1.dc1t_o[-1],color='g',linestyle='None',marker='o')
+        ax7.plot(df1.ft1[-1],df1.ft2[-1],linestyle='None',marker='o')
+        ax7.plot(df1.ma1[-1],df1.ma2[-1],linestyle='None',marker='o')
+        ax7.plot(df1.a1k1[-1],df1.a2k2[-1],linestyle='None',marker='o')
+
+        ax7.annotate('Cm',xy=(df1.dv1t_o.mean(),df1.dc1t_o.mean()),xytext=(df1.dv1t_o.mean(),df1.dc1t_o.mean()),xycoords='data',textcoords='data')
         ax7.annotate('Px',xy=(df1.dv1t_o[-1],df1.dc1t_o[-1]),xytext=(df1.dv1t_o[-1],df1.dc1t_o[-1]),xycoords='data',textcoords='data')
         ax7.annotate('Fx',xy=(df1.ft1[-1],df1.ft2[-1]),xytext=(df1.ft1[-1],df1.ft2[-1]),xycoords='data',textcoords='data')
-        ax7.annotate('Cm',xy=(df1.dv1t_o.mean(),df1.dc1t_o.mean()),xytext=(df1.dv1t_o.mean(),df1.dc1t_o.mean()),xycoords='data',textcoords='data')
+        ax7.annotate('MAx',xy=(df1.ma1[-1],df1.ma2[-1]),xytext=(df1.ma1[-1],df1.ma2[-1]),xycoords='data',textcoords='data')
+        ax7.annotate('AKx',xy=(df1.a1k1[-1],df1.a2k2[-1]),xytext=(df1.a1k1[-1],df1.a2k2[-1]),xycoords='data',textcoords='data')
         # ax7.legend(loc='upper right')
 
         #SECTION 4: MAG AND ENERGY PLOTS
@@ -106,19 +112,21 @@ def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-
 
         #SECTION 5: PHASE ANGLE PLOTS
         ax12 = plt.subplot2grid((gx,gy),(2*(s1x+s1rs+1)+1,(s1y+s1cs+1)*2),rowspan=s5rs,colspan=s1cs,projection='polar',)
-        ax12.plot(np.rad2deg(np.arctan(df1.dc1t_o/df1.dv1t_o))[-len(df1)//7:],np.sqrt(df1.dc1t_o**2+df1.dv1t_o**2)[-len(df1)//7:],label='Px',marker='o',markersize=6,linestyle='none')
-        ax12.plot(np.rad2deg(np.arctan(df1.ma2/df1.ma1))[-len(df1)//7:],np.sqrt(df1.ma1**2+df1.ma2**2)[-len(df1)//7:],label='MAx',marker='o',markersize=6,linestyle='none')
-        ax12.plot(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1))[-len(df1)//7:],np.sqrt(df1.a1k1**2+df1.a2k2**2)[-len(df1)//7:],label='AKx',marker='o',markersize=6,linestyle='none') 
-        ax12.plot(np.rad2deg(np.arctan(df1.fta))[-len(df1)//7:],df1.ftm[-len(df1)//7:],label='Fx',marker='o',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.dc1t_o/df1.dv1t_o))[-1],np.sqrt(df1.dc1t_o**2+df1.dv1t_o**2)[-1],label='Px',marker='o',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.ma2/df1.ma1)),np.sqrt(df1.ma1**2+df1.ma2**2),label='MAx',marker='o',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1)),np.sqrt(df1.a1k1**2+df1.a2k2**2),label='AKx',marker='o',markersize=6,linestyle='none') 
+        ax12.plot(np.rad2deg(np.arctan(df1.fta)),df1.ftm,label='Fx',marker='o',markersize=6,linestyle='none')
+        ax12.plot(np.rad2deg(np.arctan(df1.q2/df1.q1)),np.sqrt(df1.q1**2+df1.q2**2),label='Qx',marker='o',markersize=6,linestyle='none')
 
         ax12.annotate('Fx',xy=(df1.fta[-1],df1.ftm[-1]),xytext=(df1.fta[-1],df1.ftm[-1]),xycoords='data',textcoords='data')
+        ax12.annotate('Qx',xy=(np.rad2deg(np.arctan(df1.q2/df1.q1))[-1],np.sqrt(df1.q1**2+df1.q2**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.q2/df1.q1))[-1],np.sqrt(df1.q1**2+df1.q2**2)[-1]),xycoords='data',textcoords='data')
         ax12.annotate('Px',xy=(np.rad2deg(np.arctan(df1.dc1t_o/df1.dv1t_o))[-1],np.sqrt(df1.dc1t_o**2+df1.dv1t_o**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.dc1t_o/df1.dv1t_o))[-1],np.sqrt(df1.dc1t_o**2+df1.dv1t_o**2)[-1]),xycoords='data',textcoords='data')
         ax12.annotate('MAx',xy=(np.rad2deg(np.arctan(df1.ma2/df1.ma1))[-1],np.sqrt(df1.ma1**2+df1.ma2**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.ma2/df1.ma1))[-1],np.sqrt(df1.ma1**2+df1.ma2**2)[-1]),xycoords='data',textcoords='data')
         ax12.annotate('AKx',xy=(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1))[-1],np.sqrt(df1.a1k1**2+df1.a2k2**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1))[-1],np.sqrt(df1.a1k1**2+df1.a2k2**2)[-1]),xycoords='data',textcoords='data')
         # ax12.legend(loc='upper left')
 
         if caller == 'dump':
-            pass
+            plt.show()
         else:
             plt.pause(refresh)
             plt.clf()
