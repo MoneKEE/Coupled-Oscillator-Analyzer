@@ -25,11 +25,6 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
 
         data_i = data_s.loc[row:row+timedelta(days=N),:]
 
-        T = len(data_i)/Fs
-        df = round(1/T,3)
-        dw = round((2*np.pi)/T,3)
-        ny = round((dw*len(data_i))/2,3)
-
         data_p = mod.point_sys( data=data_i
                                 ,size=3
                                 )
@@ -49,19 +44,7 @@ def stream_r(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                 ,obv
                                 ,data_o
                                 )
-
-        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
-        for i in obv:
-            pks,props = freq.peak_analysis(data_f,col=i)
-            pksl = list(pks)
-            if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
-            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
-        peaks.dropna(how='all',inplace=True)
-        peaks.fillna(0,inplace=True)
-        pks_c = np.int0(peaks.c[peaks.c!=0])
-        pks_v = np.int0(peaks.v[peaks.v!=0])
-
-        plots.showplots(df1=data_f,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
@@ -100,19 +83,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,figcols,refresh,obv=['v','c'],diff_
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        
-        peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
-        for i in obv:
-            pks,props = freq.peak_analysis(data_o,col=i)
-            pksl = list(pks)
-            if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
-            else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
-        peaks.dropna(how='all',inplace=True)
-        peaks.fillna(0,inplace=True)
-        pks_c = np.int0(peaks.c[peaks.c!=0])
-        pks_v = np.int0(peaks.v[peaks.v!=0])
-
-        plots.showplots(df1=data_o,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh)  
+        plots.showplots(df1=data_o,caller='stream',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh)  
 
         data_s = data_f.append(data_n.iloc[t])        
 
@@ -141,21 +112,10 @@ def dump(data,comp,Fs,windows,refresh,figcols,m=1,obv=['v','c'],diff_offset=1,di
                                 ,Fs=Fs
                                 ,m=m
                                 ,obv=obv
-                                ) 
+                                )
+    plots.showplots(df1=data_o,caller='dump',m=m,Fs=Fs,figcols=figcols,obv=obv,refresh=refresh) 
 
-    peaks = pd.DataFrame(data=[[np.nan for x in range(len(obv))] for y in range(3000)],columns=obv,index=[x for x in range(3000)])
-    for i in obv:
-        pks,props = freq.peak_analysis(data_o,col=i)
-        pksl = list(pks)
-        if len(pksl)==0:peaks[i] = np.zeros(len(peaks))
-        else: peaks[i]=np.nan;peaks[i][:len(pksl)] = pksl
-    peaks.dropna(how='all',inplace=True)
-    peaks.fillna(0,inplace=True)
-    pks_c = np.int0(peaks.c[peaks.c!=0])
-    pks_v = np.int0(peaks.v[peaks.v!=0])
-    
     print('- Dump Complete...')
-    plots.showplots(df1=data_o,caller='dump',m=m,Fs=Fs,figcols=figcols,obv=obv,pks_v=pks_v,pks_c=pks_c,refresh=refresh) 
 
     breakpoint()
 

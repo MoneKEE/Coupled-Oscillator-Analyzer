@@ -6,15 +6,7 @@ from scipy.signal import find_peaks, spectrogram
 def fourier_analysis(comp, Fs, obv, data_s):
     data_f = data_s.copy()
 
-    T = len(data_s)/Fs
-    df = 1/T
-    dw = (2*np.pi)/T
-    ny = (dw*len(data_s))/2
-
     for col in obv:
-        # Need to figure out how best to use this!!!!!!!!
-        #freqs,times,spectro = spectrogram(data_f[f'd{col}1t_o'])
-
         data_af  = get_angfreq(  data=data_f
                                 ,col=col
                                 ,Fs=Fs
@@ -23,8 +15,7 @@ def fourier_analysis(comp, Fs, obv, data_s):
                                 ,col=col
                                 ,comp=comp
                                 )
-        data_f = data_r
-    return data_f
+    return data_r
 
 def harmonics(alpha,harms=9,type='harm_mlt'):
 # HARMONICS
@@ -53,19 +44,6 @@ def get_angfreq(data,Fs,col):
 
     return data_f
 
-def get_freq2period(data,f_list):
-    data_h = data.copy()
-    print('- Finding Harmonics...\n')
-
-    comp = []
-    for x in f_list:
-        test = mt.ceil(len(data_h)/x[0])
-        if test not in comp:
-            comp.append(test)
-    comp.sort()
-
-    return comp
-
 def get_tfreq(data,comp,col):
     data_i = data.copy()
 
@@ -84,13 +62,3 @@ def get_tfreq(data,comp,col):
     data_i.fillna(0,inplace=True)
 
     return data_i
-
-def peak_analysis(data,col,oneside=True):
-    data_p = data.copy()
-    if not oneside:
-        pos = data_p['fft_freq'] > 0
-    else:
-        pos = data_p['fft_freq'] != 0
-
-    meas = 10 * np.log10(data_p[f'{col}f_rad'][pos])
-    return find_peaks(meas,height=meas.describe()['75%'])

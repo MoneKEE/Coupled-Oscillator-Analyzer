@@ -5,13 +5,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import frequencies as freq
+import nonlinear as nl
 import time
 from datetime import datetime as dt
 import datacapture as dc
 import models as mod
 import misc
 
-def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),interval='hours',mode='dump',windows=[24,24*7,24*30],obv=['dv1','dc1']):
+def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c']):
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -19,13 +21,26 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),interval='hours
                                 ,interval=interval
                                 ,mode=mode
                                 ) 
-    data_m      = mod.ddm(  data=df_master
-                        ,windows=windows
-                        ,obv=obv
-                        )
-    data_n      = misc.normalizedf(data=data_m)
-    data_o      = data_n.copy()
+    data_n      = misc.normalizedf(data=df_master.copy())
+    data_m      = mod.ddm(  data=data_n
+                            ,obv=obv
+                            ,windows=windows
+                            )
+    comp        = freq.harmonics(harms=9
+                                ,alpha=1
+                                ,type='harm_mlt'
+                                )
+    data_f      = freq.fourier_analysis( comp
+                                        ,Fs=Fs
+                                        ,obv=obv
+                                        ,data=data_m
+                                        )
+    data_o      = nl.dual_oscillator(data=data_f
+                                    ,m=1
+                                    ,obv=obv
+                                    ,Fs=Fs
+                                    )
     return data_o
 
-    if __name__ == '__main__':
-        testbed() 
+if __name__ == '__main__':
+    testbed() 

@@ -54,7 +54,6 @@ def get_data_span(asset,start,stop,interval,mode):
     data.rename(columns = columnlist,inplace=True)
 
     data['dt'] = pd.to_datetime(data['t'],unit='s')
-    #data['dt'] = data['dt'].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d %H:%M'))
     data.sort_values('dt', ascending=True, inplace=True)
     data.set_index(data.dt,inplace=True)
     data.drop(['t','dt'],inplace=True,axis=1)

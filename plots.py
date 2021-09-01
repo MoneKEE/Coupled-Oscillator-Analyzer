@@ -8,7 +8,7 @@ from datetime import datetime as dt
 import models
 import misc
 
-def showplots(df1,obv,refresh,Fs,m,pks_v,pks_c,figcols,caller='dump',asset='ETH-USD'):
+def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
 
     with plt.style.context(style='seaborn'):
 
