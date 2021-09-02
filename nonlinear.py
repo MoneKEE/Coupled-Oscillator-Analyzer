@@ -50,23 +50,30 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
 
     spec,freq,line = plt.magnitude_spectrum(data_o[x1],Fs=Fs)
     w1_n = freq[spec==spec.max()][0]
-    # w1_n = data_o.fft_freq[data_o.vf_w==data_o.vf_w]
 
     spec,freq,line = plt.magnitude_spectrum(data_o[x2],Fs=Fs)
     w2_n = freq[spec==spec.max()][0]
-    # w2_n = data_o[dotx2]/data_o[x2]
 
     k1 = m*w1_n**2
     k2 = m*w2_n**2
 
-    # ma1 = -(al1*k1)*data_o[dotx1] - al2*k2*data_o[x1]
-    # ma2 = -(al2*k2)*data_o[dotx2] - al1*k1*data_o[x2]
+    ## How to handle and use the transient solution for X1 and X2
+    # half1 = data_o[x1][data_o[x1]>0]
+    # half2 = data_o[x2][data_o[x2]>0]
 
-    # ft1 = m*data_o[ddotx1] + al1*k1*data_o[dotx1] + al2*k2*data_o[x1]
-    # ft2 = m*data_o[ddotx2] + al2*k2*data_o[dotx2] + al1*k1*data_o[x2]
+    # x1_n = half1.mode()[0]
+    # x2_n = half2.mode()[0]
 
-    ma1 = -(al1*k1)*(data_o[x1]+l1) - al2*k2*data_o[x1]
-    ma2 = -(al2*k2)*(data_o[x2]+l2) - al1*k1*data_o[x2]
+    # t = np.linspace(0,len(data_o)-1,len(data_o))
+
+    # x1_tr = pd.DataFrame({'val':x1_n*np.cos(w1_n*t) + x1_n*w1_n*np.sin(w1_n*t)})
+    # x2_tr = pd.DataFrame({'val':x2_n*np.cos(w2_n*t) + x2_n*w2_n*np.sin(w2_n*t)})
+
+    # x1_tr.set_index(data_o.index,inplace=True)
+    # x2_tr.set_index(data_o.index,inplace=True)
+
+    ma1 = -(data_o[x1]+l1).multiply(al1*k1,axis=0) - data_o[x1].multiply(al2*k2,axis=0)
+    ma2 = -(data_o[x2]+l2).multiply(al2*k2,axis=0) - data_o[x2].multiply(al1*k1,axis=0)
 
     mam = np.sqrt(ma1**2 + ma2**2)
     maa = np.arctan(ma2/ma1)

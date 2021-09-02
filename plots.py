@@ -104,7 +104,7 @@ def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
         ax10.legend(loc='upper left')
     
         ax11 = plt.subplot2grid((gx,gy),(3*(s1x+s1rs+1),s1y+s1cs+1),rowspan=s4rs,colspan=s1cs)
-        ax11.step(dates_idx,df1.idposc,label='pos',linewidth=1,linestyle='solid')
+        # ax11.step(dates_idx,df1.idposc,label='pos',linewidth=1,linestyle='solid')
         ax11.step(dates_idx,df1.TE1,label='TE1',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.TE2,label='TE2',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,np.sqrt(df1.ft1**2+df1.ft2**2),label='Fx',linewidth=1,linestyle='dotted')
@@ -124,6 +124,8 @@ def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
         ax12.annotate('MAx',xy=(np.rad2deg(np.arctan(df1.ma2/df1.ma1))[-1],np.sqrt(df1.ma1**2+df1.ma2**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.ma2/df1.ma1))[-1],np.sqrt(df1.ma1**2+df1.ma2**2)[-1]),xycoords='data',textcoords='data')
         ax12.annotate('AKx',xy=(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1))[-1],np.sqrt(df1.a1k1**2+df1.a2k2**2)[-1]),xytext=(np.rad2deg(np.arctan(df1.a2k2/df1.a1k1))[-1],np.sqrt(df1.a1k1**2+df1.a2k2**2)[-1]),xycoords='data',textcoords='data')
         # ax12.legend(loc='upper left')
+
+        plt.subplots_adjust(top=0.92, bottom=0.08, left=0.1, right=0.95, hspace=0.25, wspace=0.25)
 
         if caller == 'dump':
             plt.show()
