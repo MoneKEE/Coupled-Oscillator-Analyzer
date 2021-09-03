@@ -27,8 +27,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     ddotx1 = f'd{obv[0]}3t_ooo'
     ddotx2 = f'd{obv[1]}3t_ooo'
 
-    l1 = -data_o[x1].shift(1)
-    l2 = -data_o[x2].shift(1)
+    l1 = data_o[x1].shift(1)
+    l2 = data_o[x2].shift(1)
 
     r1 = pd.DataFrame({'e1':data_o[x1].add(l1),'e2':data_o[x2]})
     r2 = pd.DataFrame({'e1':data_o[x1],'e2':data_o[x2].add(l2)})
@@ -49,35 +49,63 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['al2'] = al2
 
     spec,freq,line = plt.magnitude_spectrum(data_o[x1],Fs=Fs)
-    w1_n = freq[spec==spec.max()][0]
+    f1_n = freq[spec==spec.max()][0]
+    w1_n = 2*np.pi*f1_n
 
     spec,freq,line = plt.magnitude_spectrum(data_o[x2],Fs=Fs)
-    w2_n = freq[spec==spec.max()][0]
+    f2_n = freq[spec==spec.max()][0]
+    w2_n = 2*np.pi*f2_n
 
     k1 = m*w1_n**2
     k2 = m*w2_n**2
 
-    ## How to handle and use the transient solution for X1 and X2
-    # half1 = data_o[x1][data_o[x1]>0]
-    # half2 = data_o[x2][data_o[x2]>0]
+    ## DERIVE GENERAL SOLUTION AND FREE BODY FORCES
+    half1 = data_o[x1][data_o[x1]>0]
+    half2 = data_o[x2][data_o[x2]>0]
 
-    # x1_n = half1.mode()[0]
-    # x2_n = half2.mode()[0]
+    x1_n = half1.mode()[0]
+    x2_n = half2.mode()[0]
 
-    # t = np.linspace(0,len(data_o)-1,len(data_o))
+    t = np.arange(0,len(data_o))
 
-    # x1_tr = pd.DataFrame({'val':x1_n*np.cos(w1_n*t) + x1_n*w1_n*np.sin(w1_n*t)})
-    # x2_tr = pd.DataFrame({'val':x2_n*np.cos(w2_n*t) + x2_n*w2_n*np.sin(w2_n*t)})
+    x1_gn = pd.DataFrame({'val':x1_n*np.cos(w1_n*t)+x1_n*w1_n*np.sin(w1_n*t)})
+    x2_gn = pd.DataFrame({'val':x2_n*np.cos(w2_n*t)+x2_n*w2_n*np.sin(w2_n*t)})
 
-    # x1_tr.set_index(data_o.index,inplace=True)
-    # x2_tr.set_index(data_o.index,inplace=True)
+    x1_gn.set_index(data_o.index,inplace=True)
+    x2_gn.set_index(data_o.index,inplace=True)
 
-    ma1 = -(data_o[x1]+l1).multiply(al1*k1,axis=0) - data_o[x1].multiply(al2*k2,axis=0)
-    ma2 = -(data_o[x2]+l2).multiply(al2*k2,axis=0) - data_o[x2].multiply(al1*k1,axis=0)
+    data_o['x1_gn'] = x1_gn
+    data_o['x2_gn'] = x2_gn
+
+    ## THE PARTICULAR SOLUTION XP=X-XG
+    x1_pr = data_o[x1].sub(x1_gn.val)
+    x2_pr = data_o[x2].sub(x2_gn.val)
+
+    data_o['x1_pr'] = x1_pr
+    data_o['x2_pr'] = x2_pr
+
+    l1_n = x1_gn.shift(1)
+    l2_n = x2_gn.shift(1)
+
+    r1_n = pd.DataFrame({'e1':x1_gn.add(l1_n).iloc[:,0],'e2':x2_gn.iloc[:,0]}).set_index(data_o.index)
+    r2_n = pd.DataFrame({'e1':x1_gn.iloc[:,0],'e2':x2_gn.add(l2_n).iloc[:,0]}).set_index(data_o.index)
+
+    r1magn = np.sqrt((r1_n['e1']**2)+(r1_n['e2'])**2)
+    r2magn = np.sqrt((r2_n['e1']**2)+(r2_n['e2'])**2)
+
+    al1n = 1-(l1_n.div(r1magn,axis=0))
+    al2n = 1-(l2_n.div(r2magn,axis=0))
+
+    ma1 = -(x1_gn+l1_n).multiply(al1n*k1,axis=0) - x1_gn.multiply(al2n*k2,axis=0)
+    ma2 = -(x2_gn+l2_n).multiply(al2n*k2,axis=0) - x2_gn.multiply(al1n*k1,axis=0)
+
+    # ma1 = -(data_o[x1]+l1).multiply(al1*k1,axis=0) - data_o[x1].multiply(al2*k2,axis=0)
+    # ma2 = -(data_o[x2]+l2).multiply(al2*k2,axis=0) - data_o[x2].multiply(al1*k1,axis=0)
 
     mam = np.sqrt(ma1**2 + ma2**2)
     maa = np.arctan(ma2/ma1)
 
+    ## FORCED SYSTEM FORCES
     ft1 = m*data_o[ddotx1] + al1*k1*(data_o[x1]+l1) + al2*k2*data_o[x1]
     ft2 = m*data_o[ddotx2] + al2*k2*(data_o[x2]+l2) + al1*k1*data_o[x2]
 

@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 def main(argv):
     # PARAMETERS
     harms       = 9
-    sr          = 0.001
+    sr          = 0.5
     alpha       = 3
     N           = 7
     Fs          = round(1/sr,3)
