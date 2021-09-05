@@ -8,8 +8,9 @@ from datetime import datetime as dt
 import models
 import misc
 
-def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
+def showplots(df1,obv,Fs,refresh=0.5,caller='dump',asset='ETH-USD',alpha=1):
 
+    pd.plotting.register_matplotlib_converters()
     with plt.style.context(style='seaborn'):
 
         #LINE SUBLPLOTS
@@ -27,11 +28,13 @@ def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
         dw = round((2*np.pi)/T,3)
         ny = round((dw*len(df1))/2,3)
 
+        ttl = f'Analysis Dashboard - Asset:{asset} |N ={len(df1)} |T={T} |Fs={Fs} |F={df} |W={dw} |Fn={ny}'
+
         plt.ion()
 
         dates_idx = dates.date2num(df1.index)
         if len(plt.get_fignums()) == 0:
-            plt.figure(f'Analysis Dashboard - Asset:{asset} |N ={len(df1)} |T={T} |Fs={Fs} |F={df} |W={dw} |Fn={ny}')
+            fig = plt.figure(ttl)
         else:
             plt.figure(1)
             
@@ -107,14 +110,17 @@ def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
 
         #SECTION 4: MAG AND ENERGY PLOTS
         ax10 = plt.subplot2grid((gx,gy),(3*(s1x+s1rs+1),s1y),rowspan=s4rs,colspan=s1cs)
-        ax10.magnitude_spectrum(df1.dv1t_o,Fs=Fs,linestyle='none',markersize='5',marker='o',label='vt')
-        ax10.magnitude_spectrum(df1.dc1t_o,Fs=Fs,linestyle='none',markersize='5',marker='o',label='ct')
+        for i in range(1,10):
+            ax10.plot_date(dates_idx,df1[f'vf_t{i*alpha}'],xdate=False,linestyle='-',fmt='',label=f'vf_t{i*alpha}')
+        # ax10.magnitude_spectrum(df1.dv1t_o,Fs=Fs,linestyle='none',markersize='5',marker='o',label='vt')
+        # ax10.magnitude_spectrum(df1.dc1t_o,Fs=Fs,linestyle='none',markersize='5',marker='o',label='ct')
         ax10.legend(loc='upper left')
     
         ax11 = plt.subplot2grid((gx,gy),(3*(s1x+s1rs+1),s1y+s1cs+1),rowspan=s4rs,colspan=s1cs)
         ax11.step(dates_idx,df1.TE1,label='TE1',color='m',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.TE2,label='TE2',color='c',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,np.sqrt(df1.ft1**2+df1.ft2**2),label='Fx',linewidth=1,linestyle='dotted')
+        ax11.step(dates_idx,df1.idposc,label='pos',color='g',linewidth=0.5,linestyle='dotted')
         ax11.legend(loc='lower right')
 
         #SECTION 5: PHASE ANGLE PLOTS
@@ -133,6 +139,7 @@ def showplots(df1,obv,refresh,Fs,caller='dump',asset='ETH-USD'):
         # ax12.legend(loc='upper left')
 
         plt.subplots_adjust(top=0.92, bottom=0.08, left=0.1, right=0.95, hspace=0.25, wspace=0.25)
+        plt.figure(1).suptitle(ttl)
 
         if caller == 'dump':
             plt.show()

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from numpy import fft
 import time
 
-def stream_r(data,comp,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+def stream_r(data,comp,harms,Fs,windows,mode,refresh,alpha,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that test
     # N days have already been processed tst
 
@@ -44,14 +44,14 @@ def stream_r(data,comp,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1
                                 ,obv
                                 ,data_o
                                 )
-        plots.showplots(df1=data_f,caller='stream',Fs=Fs,obv=obv,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
     return data_s
 
 
-def stream_e(data,comp,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+def stream_e(data,comp,harms,Fs,windows,mode,alpha,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that 
     # N days have already been processed
 
@@ -83,7 +83,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        plots.showplots(df1=data_o,caller='stream',Fs=Fs,obv=obv,refresh=refresh)  
+        plots.showplots(df1=data_o,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)  
 
         data_s = data_f.append(data_n.iloc[t])        
 
@@ -91,7 +91,7 @@ def stream_e(data,comp,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1
 
     return data_s
    
-def dump(data,comp,Fs,windows,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1): 
+def dump(data,comp,Fs,windows,refresh,alpha,m=1,obv=['v','c'],diff_offset=1,diff=1): 
 
     data_n = misc.normalizedf(data)
 
@@ -113,7 +113,7 @@ def dump(data,comp,Fs,windows,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
                                 ,m=m
                                 ,obv=obv
                                 )
-    plots.showplots(df1=data_o,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
+    plots.showplots(df1=data_o,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
 
     print('- Dump Complete...')
 

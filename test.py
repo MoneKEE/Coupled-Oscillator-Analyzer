@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import frequencies as freq
 import nonlinear as nl
+import plots
 import time
 from datetime import datetime as dt
 import datacapture as dc
@@ -43,6 +44,7 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
+    plots.showplots(df1=data_o,caller='dump',Fs=Fs,obv=obv) 
     return data_o
 
 if __name__ == '__main__':

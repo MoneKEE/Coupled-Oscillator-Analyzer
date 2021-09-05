@@ -15,6 +15,7 @@ def fourier_analysis(comp, Fs, obv, data_s):
                                 ,col=col
                                 ,comp=comp
                                 )
+        data_f = data_r
     return data_r
 
 def harmonics(alpha,harms=9,type='harm_mlt'):
@@ -49,14 +50,14 @@ def get_tfreq(data,comp,col):
 
     fft_list = np.asarray(data_i[f'd{col}1t_o'].tolist())
 
-    data_i[f'{col}f_t'] = np.fft.ifft(np.copy(fft_list))
+    data_i[f'{col}f_t'] = np.fft.ifft(np.fft.fft(np.copy(fft_list)))
 
     _num_ = 0
     for num_ in comp:
         bnd                     = num_
         fft_listm10             = np.copy(fft_list)
         fft_listm10[bnd:-bnd]   = 0
-        data_i[f'{col}f_t'+str(bnd)]  =np.fft.ifft(fft_listm10)
+        data_i[f'{col}f_t'+str(bnd)]  =np.real(np.fft.ifft(fft_listm10))
         _num_                   = bnd
 
     data_i.fillna(0,inplace=True)

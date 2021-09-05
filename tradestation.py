@@ -23,7 +23,7 @@ def main(argv):
     # PARAMETERS
     harms       = 9
     sr          = 0.5
-    alpha       = 3
+    alpha       = 1
     N           = 7
     Fs          = round(1/sr,3)
     diff_offset = 1
@@ -114,6 +114,7 @@ def main(argv):
                             ,mode=mode
                             ,windows=windows
                             ,N=N
+                            ,alpha=alpha
                             )
     elif mode=='stream_r':
         ds = modes.stream_r(  data=df_master
@@ -129,6 +130,7 @@ def main(argv):
                             ,mode=mode
                             ,windows=windows
                             ,N=N
+                            ,alpha=alpha
                             )
     # Run dump
     else:
@@ -141,6 +143,7 @@ def main(argv):
                             ,refresh=refresh
                             ,m=m
                             ,obv=obv
+                            ,alpha=alpha
                             
                             )
 
