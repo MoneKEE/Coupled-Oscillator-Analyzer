@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
 
 def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
     data_m = data.copy()
@@ -14,7 +13,7 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         data_m[f'{obv[0]}{obv[i]}_r'] = data_m[f'd{obv[0]}1t_o'].divide(data_m[f'd{obv[i]}1t_o'])
         data_m[f'{obv[0]}{obv[i]}_c'] = data_m[f'd{obv[i]}1t_o'].divide(data_m[f'd{obv[0]}1t_o'])
 
-        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'].shift(0) >= data_m[f'd{obv[i]}1t_o'].mean()+(1.5*data_m[f'd{obv[i]}1t_o']).std(),1,0)
+        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'].shift(0) > data_m[f'd{obv[i]}1t_o'].mean()+(1.5*data_m[f'd{obv[i]}1t_o']).std(),1,0)
 
         data_m.fillna(0,inplace=True)
 
@@ -53,6 +52,11 @@ def point_sys(data,obv=['c','v'],size=3):
                     data_p[f'{o}{i}too_1'] = data_p[f'd{o}{i}t_oo'] - data_p[f'd{o}{i}t_oo'].shift(1)
                     data_p[f'd{o}{i}t_ooo'] = data_p[f'{o}{i}too_1'].divide(i)
         data_p.fillna(0,inplace=True)
+
+        for col in data_p.columns:
+            data_p[col] = data_p[col]/np.abs(data_p[col]).max()
+            data_p[col] = data_p[col].replace([np.inf, -np.inf], np.nan)
+            data_p[col] = data_p[col].fillna(np.abs(data_p[col]).max())
 
         print('Parameters are ready...\n')
     return data_p

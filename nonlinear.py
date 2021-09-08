@@ -1,12 +1,6 @@
 import pandas as pd
 import numpy as np
-import scipy as sy
 from scipy import signal as sig
-import matplotlib.pyplot as plt
-from datetime import datetime as dt
-
-import misc 
-import models
 
 # The dual oscillator attempts to model price action through
 # the motion of a two axis simple oscillator. It accepts
@@ -65,8 +59,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     x1_0 = data_o[x1][0]
     x2_0 = data_o[x2][0]
 
-    dotx1_0 = data_o[x1][data_o[x1].abs()>0][0]-data_o[x1][0]
-    dotx2_0 = data_o[x2][data_o[x2].abs()>0][0]-data_o[x2][0]
+    dotx1_0 = data_o[x1][data_o[x1]!=0][0]-data_o[x1][0]
+    dotx2_0 = data_o[x2][data_o[x2]!=0][0]-data_o[x2][0]
 
     t = np.arange(0,len(data_o))
 
@@ -98,27 +92,30 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     al1n = 1-(l1_n.div(r1magn,axis=0))
     al2n = 1-(l2_n.div(r2magn,axis=0))
 
+    data_o['al1n'] = al1n
+    data_o['al2n'] = al2n
+
     ma1 = -(x1_gn+l1_n).multiply(al1n*k1,axis=0) - x1_gn.multiply(al2n*k2,axis=0)
     ma2 = -(x2_gn+l2_n).multiply(al2n*k2,axis=0) - x2_gn.multiply(al1n*k1,axis=0)
 
     mam = np.sqrt(ma1**2 + ma2**2)
     maa = np.arctan(ma2/ma1)
 
-    data_o['mam'] = mam
-    data_o['maa'] = maa
+    data_o['Mam'] = mam
+    data_o['Maa'] = maa
 
     ## FORCED SYSTEM FORCES
     ft1 = m*data_o[ddotx1] + al1*k1*(data_o[x1]+l1) + al2*k2*data_o[x1]
     ft2 = m*data_o[ddotx2] + al2*k2*(data_o[x2]+l2) + al1*k1*data_o[x2]
 
-    ftm = np.sqrt(ft1**2+ft2**2)
-    fta = np.arctan(ft2/ft1)
+    Fmm = np.sqrt(ft1**2+ft2**2)
+    Fma = np.arctan(ft2/ft1)
 
     data_o['ft1'] = ft1
     data_o['ft2'] = ft2
 
-    data_o['ftm'] = ftm
-    data_o['fta'] = fta
+    data_o['Fmm'] = Fmm
+    data_o['Fma'] = Fma
 
     ac1 = ma1/m
     ac2 = ma2/m
@@ -126,12 +123,15 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['k1'] = k1
     data_o['k2'] = k2
 
-    a1k1 = al1*k1
-    a2k2 = al2*k2
+    data_o['Km'] = np.sqrt(k1**2+k2**2)
+    data_o['Ka'] = np.arctan(k2/k1)
 
-    data_o['a1k1'] = a1k1
-    data_o['a2k2'] = a2k2
- 
+    data_o['Alm'] = np.sqrt(al1**2+al2**2)
+    data_o['Ala'] = np.arctan(al2/al1)
+
+    data_o['Alnm'] = np.sqrt(al1n**2+al2n**2)
+    data_o['Alna'] = np.arctan(al2n/al1n)
+
     data_o['ac1'] = ac1
     data_o['ac2'] = ac2
 
@@ -142,11 +142,14 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['w2_n'] = w2_n
 
     # damping ratio
-    dr1 = a1k1.divide(2*np.sqrt(m*k1),axis=0)
-    dr2 = a2k2.divide(2*np.sqrt(m*k2),axis=0)
+    dr1 = (al1*k1).divide(2*np.sqrt(m*k1),axis=0)
+    dr2 = (al2*k2).divide(2*np.sqrt(m*k2),axis=0)
 
     data_o['dr1'] = dr1
     data_o['dr2'] = dr2
+
+    data_o['Drm'] = np.sqrt(dr1**2+dr2**2)
+    data_o['Dra'] = np.arctan(dr2/dr1)
 
     # anguluar freq
     w1 = np.sqrt(1-dr1).multiply(w1_n,axis=0)
@@ -169,12 +172,18 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['lmda1'] = lmda1
     data_o['lmda2'] = lmda2
 
+    data_o['Lmm'] = np.sqrt(lmda1**2 + lmda2**2)
+    data_o['Lma'] = np.arctan(lmda2/lmda1)
+
     # Q factor
     q1 = (2*dr1)**-1
     q2 = (2*dr2)**-1
 
     data_o['q1'] = q1
     data_o['q2'] = q2
+
+    data_o['Qfm'] = np.sqrt(q1**2+q2**2)
+    data_o['Qfa'] = np.arctan(q2/q1)
 
     # Energy Profile
     PE1 = 0.5*k1*(del1**2)
@@ -193,12 +202,22 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['KE2'] = KE2
     data_o['TE2'] = TE2
 
+    Pxm = np.sqrt(data_o[x1]**2+data_o[x2]**2)
+    Pxa = np.arctan(data_o[x2]/data_o[x1])
+
+    data_o['Pxm'] = Pxm
+    data_o['Pxa'] = Pxa
+
+    # Work Profile
+    vc_wrk = Fmm * Pxm
+    data_o['vc_wrk'] = vc_wrk
+
     data_o.fillna(0,inplace=True)
 
-    for col in data_o.columns:
+    for col in data_o.columns[data_o.columns.get_loc('v1t_1'):]:
+        # data_o[col] = (data_o[col]-data_o[col].mean())/data_o[col].std()
+        data_o[col] = data_o[col]/np.abs(data_o[col]).max()
         data_o[col] = data_o[col].replace([np.inf, -np.inf], np.nan)
         data_o[col] = data_o[col].fillna(np.abs(data_o[col]).max())
- 
-    data_n = misc.normalizedf(data_o)
 
-    return data_n
+    return data_o

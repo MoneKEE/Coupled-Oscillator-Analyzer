@@ -1,17 +1,8 @@
 import progressbar
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
-from sklearn.metrics import mean_squared_error
+# from sklearn import preprocessing
 
-def get_mean_squared_error(data,comp,col):
-
-    h_list = ['ifft_'+str(x) for x in comp]
-    ifft_sum = data[h_list].sum(axis=1)
-    signal = data[col]
-    val = mean_squared_error(signal,ifft_sum)
-
-    return val
 def iseven(num):
     if (int(num) % 2) == 0:
         return 1
@@ -33,9 +24,21 @@ def progress_bar(x,load_text):
 def normalizedf(data):
     #Normalize the values
     for col in data.columns:
-        data[col] = data[col]/np.max(np.abs(data[col]))
-        data[col] = round(data[col],3)
-    return data
+        if col !='idposc':
+            data[col] = (data[col]-data[col].mean())/data[col].std()
+            data[col] = data[col]/np.abs(data[col]).max()
+
+    # data_a = data.drop('idposc',axis=1)
+    # Scaler = preprocessing.MinMaxScaler(feature_range=(-1,1))
+    # data_t = pd.DataFrame(Scaler.fit_transform(data_a),index=data_a.index,columns=data_a.columns)
+
+    data_t=data.copy()
+
+    for col in data_t.columns:
+        data_t[col] = data_t[col].replace([np.inf, -np.inf], np.nan)
+        data_t[col] = data_t[col].fillna(np.abs(data_t[col]).max())
+
+    return data_t
 
 def serial_todt(x,format='%y/%m/%d %H'):
     for i in range(len(x)):

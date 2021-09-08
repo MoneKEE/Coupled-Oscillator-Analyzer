@@ -1,20 +1,16 @@
 ###################################################
 #TEST BED
 ###################################################
-
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import frequencies as freq
 import nonlinear as nl
 import plots
-import time
 from datetime import datetime as dt
 import datacapture as dc
 import models as mod
 import misc
 
-def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c']):
+def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -22,30 +18,26 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='
                                 ,interval=interval
                                 ,mode=mode
                                 ) 
-    data_n      = misc.normalizedf(data=df_master.copy())
-    data_p      = mod.point_sys(data_n,size=3)
-    data_m      = mod.ddm(  data=data_p
-                            ,diff=1
-                            ,diff_offset=1
-                            ,obv=obv
-                            ,windows=windows
-                            )
-    comp        = freq.harmonics(harms=9
-                                ,alpha=1
-                                ,type='harm_mlt'
+    data_p = mod.point_sys(df_master,size=3)
+    data_d = mod.ddm(   data=data_p
+                        ,obv=obv
+                        ,windows=windows
+                        )
+    data_o = nl.dual_oscillator(data=data_d
+                                ,Fs=Fs
+                                ,m=m
+                                ,obv=obv
                                 )
-    data_f      = freq.fourier_analysis( comp
-                                        ,Fs
-                                        ,obv
-                                        ,data_m
-                                        )
-    data_o      = nl.dual_oscillator(data=data_f
-                                    ,m=1
-                                    ,obv=obv
-                                    ,Fs=Fs
+    data_n = misc.normalizedf(data_o)
+    data_f,alpha  = freq.fourier_analysis(Fs
+                                    ,obv
+                                    ,data_n
                                     )
-    plots.showplots(df1=data_o,caller='dump',Fs=Fs,obv=obv) 
-    return data_o
+
+    plots.showplots(data_f,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
+
+    print('- Dump Complete...')
+    return data_f
 
 if __name__ == '__main__':
     testbed() 

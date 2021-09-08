@@ -6,9 +6,6 @@ where dP(t) = P(t) - P(t-n) and dV(t) = V(t) - V(t-n)
 
 '''
 from datetime import datetime as dt
-
-from numpy import NaN
-import frequencies as freq
 import datacapture as dc
 import pandas as pd
 import modes
@@ -22,7 +19,7 @@ warnings.filterwarnings('ignore')
 def main(argv):
     # PARAMETERS
     harms       = 9
-    sr          = 0.5
+    sr          = 0.1
     alpha       = 1
     N           = 7
     Fs          = round(1/sr,3)
@@ -82,10 +79,10 @@ def main(argv):
         elif opt in ('-n', 'win'):
             N = int(arg)
 
-    comp        = freq.harmonics(harms=harms
-                                ,alpha=alpha
-                                ,type='harm_mlt'
-                                )
+    # comp        = freq.harmonics(harms=harms
+    #                             ,alpha=alpha
+    #                             ,type='harm_mlt'
+    #                             )
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
                                 ,stop=stop
@@ -102,7 +99,6 @@ def main(argv):
 
     if mode=='stream_e':
         ds = modes.stream_e(  data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
@@ -114,11 +110,9 @@ def main(argv):
                             ,mode=mode
                             ,windows=windows
                             ,N=N
-                            ,alpha=alpha
                             )
     elif mode=='stream_r':
         ds = modes.stream_r(  data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
@@ -130,12 +124,10 @@ def main(argv):
                             ,mode=mode
                             ,windows=windows
                             ,N=N
-                            ,alpha=alpha
                             )
     # Run dump
     else:
         dd = modes.dump( data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,Fs=Fs
@@ -143,8 +135,6 @@ def main(argv):
                             ,refresh=refresh
                             ,m=m
                             ,obv=obv
-                            ,alpha=alpha
-                            
                             )
 
 

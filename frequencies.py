@@ -1,9 +1,7 @@
 import numpy as np
-import math as mt
-import inspect
-from scipy.signal import find_peaks, spectrogram
+from scipy.signal import periodogram as pe
 
-def fourier_analysis(comp, Fs, obv, data_s):
+def fourier_analysis(Fs, obv, data_s):
     data_f = data_s.copy()
 
     for col in obv:
@@ -11,12 +9,12 @@ def fourier_analysis(comp, Fs, obv, data_s):
                                 ,col=col
                                 ,Fs=Fs
                                         )
-        data_r  = get_tfreq( data=data_af
+        data_r,alpha  = get_tfreq( data=data_af
                                 ,col=col
-                                ,comp=comp
+                                ,Fs=Fs
                                 )
         data_f = data_r
-    return data_r
+    return data_r, alpha
 
 def harmonics(alpha,harms=9,type='harm_mlt'):
 # HARMONICS
@@ -34,9 +32,9 @@ def get_angfreq(data,Fs,col):
     print(f'- Performing Fourier Transform for {col}..\n')
 
     data_f[f'{col}_fft']    = np.fft.fft(np.asarray(data_f[f'd{col}1t_o'].tolist()))
-    data_f[f'{col}f_rad']   = np.sqrt(np.real(data_f[f'{col}_fft'])**2 + np.imag(data_f[f'{col}_fft'])**2)
-    data_f[f'{col}f_ang']   = np.arctan(np.imag(data_f[f'{col}_fft'])/np.real(data_f[f'{col}_fft']))
-    data_f[f'{col}f_w']     = data_f[f'{col}f_ang'] - data_f[f'{col}f_ang'].shift(1)
+    # data_f[f'{col}f_rad']   = np.sqrt(np.real(data_f[f'{col}_fft'])**2 + np.imag(data_f[f'{col}_fft'])**2)
+    # data_f[f'{col}f_ang']   = np.arctan(np.imag(data_f[f'{col}_fft'])/np.real(data_f[f'{col}_fft']))
+    # data_f[f'{col}f_w']     = data_f[f'{col}f_ang'] - data_f[f'{col}f_ang'].shift(1)
     
     fft_freq = np.fft.fftfreq(len(data_f),d=1/Fs)
     data_f['fft_freq'] = fft_freq
@@ -45,14 +43,17 @@ def get_angfreq(data,Fs,col):
 
     return data_f
 
-def get_tfreq(data,comp,col):
+def get_tfreq(data,col,Fs):
     data_i = data.copy()
 
     fft_list = np.asarray(data_i[f'd{col}1t_o'].tolist())
 
-    data_i[f'{col}f_t'] = np.fft.ifft(np.fft.fft(np.copy(fft_list)))
 
+    f,s = pe(data_i.dv1t_o,fs=Fs)
+    alpha = int(np.ceil(f[s == s.max()][0]))
+    data_i[f'{col}f_t'] = np.fft.ifft(np.fft.fft(np.copy(fft_list)))
     _num_ = 0
+    comp = [alpha*x for x in range(1,10)]
     for num_ in comp:
         bnd                     = num_
         fft_listm10             = np.copy(fft_list)
@@ -62,4 +63,4 @@ def get_tfreq(data,comp,col):
 
     data_i.fillna(0,inplace=True)
 
-    return data_i
+    return data_i, alpha
