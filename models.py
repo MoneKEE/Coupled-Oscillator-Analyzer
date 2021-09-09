@@ -13,15 +13,18 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
         data_m[f'{obv[0]}{obv[i]}_r'] = data_m[f'd{obv[0]}1t_o'].divide(data_m[f'd{obv[i]}1t_o'])
         data_m[f'{obv[0]}{obv[i]}_c'] = data_m[f'd{obv[i]}1t_o'].divide(data_m[f'd{obv[0]}1t_o'])
 
-        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'].shift(0) > data_m[f'd{obv[i]}1t_o'].mean()+(1.5*data_m[f'd{obv[i]}1t_o']).std(),1,0)
+        # Ideal position selection: I
+        # IF the next data point represents a large positive move
+        # OR the current data point represents a large positive move
+        # THEN 1
+        # ELSE 0
+        data_m[f'idpos{obv[i]}'] = np.where((data_m[f'd{obv[i]}1t_o'] > data_m[f'd{obv[i]}1t_o'].mean()+(1.5*data_m[f'd{obv[i]}1t_o']).std()) \
+                                            | (data_m[f'd{obv[i]}1t_o'].shift(-1) > data_m[f'd{obv[i]}1t_o'].mean()+(1.5*data_m[f'd{obv[i]}1t_o']).std() )
+                                            ,1
+                                            ,0
+                                            )
 
         data_m.fillna(0,inplace=True)
-
-    for o in obv:
-        data_m[f'{o}_mean'] = data_m[f'd{o}1t_o'].mean()
-        data_m[f'{o}_median'] = data_m[f'd{o}1t_o'].median()
-        data_m[f'{o}_mode'] = data_m[f'd{o}1t_o'].mode()
-        data_m[f'{o}_std'] = data_m[f'd{o}1t_o'].std()
 
         # Remove nans and infs
         if np.isinf(data_m[f'{obv[0]}{obv[i]}_c'].max()):

@@ -32,9 +32,6 @@ def get_angfreq(data,Fs,col):
     print(f'- Performing Fourier Transform for {col}..\n')
 
     data_f[f'{col}_fft']    = np.fft.fft(np.asarray(data_f[f'd{col}1t_o'].tolist()))
-    # data_f[f'{col}f_rad']   = np.sqrt(np.real(data_f[f'{col}_fft'])**2 + np.imag(data_f[f'{col}_fft'])**2)
-    # data_f[f'{col}f_ang']   = np.arctan(np.imag(data_f[f'{col}_fft'])/np.real(data_f[f'{col}_fft']))
-    # data_f[f'{col}f_w']     = data_f[f'{col}f_ang'] - data_f[f'{col}f_ang'].shift(1)
     
     fft_freq = np.fft.fftfreq(len(data_f),d=1/Fs)
     data_f['fft_freq'] = fft_freq

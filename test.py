@@ -8,9 +8,8 @@ import plots
 from datetime import datetime as dt
 import datacapture as dc
 import models as mod
-import misc
 
-def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
+def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2021,8,1),Fs=8,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -28,10 +27,9 @@ def testbed(asset='ETH-USD',start=dt(2019,1,1),stop=dt(2021,1,1),Fs=2,interval='
                                 ,m=m
                                 ,obv=obv
                                 )
-    data_n = misc.normalizedf(data_o)
     data_f,alpha  = freq.fourier_analysis(Fs
                                     ,obv
-                                    ,data_n
+                                    ,data_o
                                     )
 
     plots.showplots(data_f,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 

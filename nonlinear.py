@@ -44,15 +44,19 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
 
     f,s = sig.periodogram(data_o[x1],fs=Fs)
 
-    fr1_n   = f[s == s.max()][0]
+    sd = ((s.max()-s.min())/(2*s.std()))-1
+
+    fr1_n   = f[np.abs(s) >= (s.mean() + sd*s.std())]
     w1_n    = 2*np.pi*fr1_n
 
     f,s = sig.periodogram(data_o[x2],fs=Fs)
+    
+    sd = ((s.max()-s.min())/(2*s.std()))-1
 
-    fr2_n   = f[s == s.max()][0]
+    fr2_n   = f[np.abs(s) >= (s.mean() + sd*s.std())]
     w2_n    = 2*np.pi*fr2_n
 
-    k1 = m*w1_n**2
+    k1 = m*w1_n**2 
     k2 = m*w2_n**2
 
     ## DERIVE GENERAL SOLUTION AND FREE BODY FORCES
@@ -64,8 +68,17 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
 
     t = np.arange(0,len(data_o))
 
-    x1_gn = pd.DataFrame({'val':x1_0*np.cos(w1_n*t)+dotx1_0*np.sin(w1_n*t)})
-    x2_gn = pd.DataFrame({'val':x2_0*np.cos(w2_n*t)+dotx2_0*np.sin(w2_n*t)})
+    x1_gn = pd.DataFrame({'val':x1_0*np.cos(w1_n[0]*t)+dotx1_0*np.sin(w1_n[0]*t)})
+    x2_gn = pd.DataFrame({'val':x2_0*np.cos(w2_n[0]*t)+dotx2_0*np.sin(w2_n[0]*t)})
+
+    for i in range(1,len(w1_n)):
+        if len(w1_n) > 1:
+            x1_gn = x1_gn.add(pd.DataFrame({'val':x1_0*np.cos(w1_n[i]*t)+dotx1_0*np.sin(w1_n[i]*t)}),axis=1)
+
+    for i in range(1,len(w2_n)):
+        if len(w2_n) > 1:
+            x2_gn = x2_gn.add(pd.DataFrame({'val':x2_0*np.cos(w2_n[i]*t)+dotx2_0*np.sin(w2_n[i]*t)}),axis=1)
+
 
     x1_gn.set_index(data_o.index,inplace=True)
     x2_gn.set_index(data_o.index,inplace=True)
@@ -95,8 +108,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['al1n'] = al1n
     data_o['al2n'] = al2n
 
-    ma1 = -(x1_gn+l1_n).multiply(al1n*k1,axis=0) - x1_gn.multiply(al2n*k2,axis=0)
-    ma2 = -(x2_gn+l2_n).multiply(al2n*k2,axis=0) - x2_gn.multiply(al1n*k1,axis=0)
+    ma1 = -(x1_gn+l1_n).multiply(al1n*k1.mean(),axis=0) - x1_gn.multiply(al2n*k2.mean(),axis=0)
+    ma2 = -(x2_gn+l2_n).multiply(al2n*k2.mean(),axis=0) - x2_gn.multiply(al1n*k1.mean(),axis=0)
 
     mam = np.sqrt(ma1**2 + ma2**2)
     maa = np.arctan(ma2/ma1)
@@ -105,8 +118,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['Maa'] = maa
 
     ## FORCED SYSTEM FORCES
-    ft1 = m*data_o[ddotx1] + al1*k1*(data_o[x1]+l1) + al2*k2*data_o[x1]
-    ft2 = m*data_o[ddotx2] + al2*k2*(data_o[x2]+l2) + al1*k1*data_o[x2]
+    ft1 = m*data_o[ddotx1] + al1*k1.mean()*(data_o[x1]+l1) + al2*k2.mean()*data_o[x1]
+    ft2 = m*data_o[ddotx2] + al2*k2.mean()*(data_o[x2]+l2) + al1*k1.mean()*data_o[x2]
 
     Fmm = np.sqrt(ft1**2+ft2**2)
     Fma = np.arctan(ft2/ft1)
@@ -120,11 +133,11 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     ac1 = ma1/m
     ac2 = ma2/m
 
-    data_o['k1'] = k1
-    data_o['k2'] = k2
+    data_o['k1'] = k1.mean()
+    data_o['k2'] = k2.mean()
 
-    data_o['Km'] = np.sqrt(k1**2+k2**2)
-    data_o['Ka'] = np.arctan(k2/k1)
+    data_o['Km'] = np.sqrt(k1.mean()**2+k2.mean()**2)
+    data_o['Ka'] = np.arctan(k2.mean()/k1.mean())
 
     data_o['Alm'] = np.sqrt(al1**2+al2**2)
     data_o['Ala'] = np.arctan(al2/al1)
@@ -138,12 +151,12 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['ma1'] = ma1
     data_o['ma2'] = ma2
 
-    data_o['w1_n'] = w1_n
-    data_o['w2_n'] = w2_n
+    data_o['w1_n'] = w1_n.mean()
+    data_o['w2_n'] = w2_n.mean()
 
     # damping ratio
-    dr1 = (al1*k1).divide(2*np.sqrt(m*k1),axis=0)
-    dr2 = (al2*k2).divide(2*np.sqrt(m*k2),axis=0)
+    dr1 = (al1*k1.mean()).divide(2*np.sqrt(m*k1.mean()),axis=0)
+    dr2 = (al2*k2.mean()).divide(2*np.sqrt(m*k2.mean()),axis=0)
 
     data_o['dr1'] = dr1
     data_o['dr2'] = dr2
@@ -152,8 +165,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['Dra'] = np.arctan(dr2/dr1)
 
     # anguluar freq
-    w1 = np.sqrt(1-dr1).multiply(w1_n,axis=0)
-    w2 = np.sqrt(1-dr2).multiply(w2_n,axis=0)
+    w1 = np.sqrt(1-dr1).multiply(w1_n.mean(),axis=0)
+    w2 = np.sqrt(1-dr2).multiply(w2_n.mean(),axis=0)
 
     data_o['w1'] = w1
     data_o['w2'] = w2
@@ -166,8 +179,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['fr2'] = fr2
 
     # exponential decay
-    lmda1 = dr1.multiply(w1_n,axis=0)
-    lmda2 = dr2.multiply(w2_n,axis=0)
+    lmda1 = dr1.multiply(w1_n.mean(),axis=0)
+    lmda2 = dr2.multiply(w2_n.mean(),axis=0)
 
     data_o['lmda1'] = lmda1
     data_o['lmda2'] = lmda2
@@ -186,7 +199,7 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['Qfa'] = np.arctan(q2/q1)
 
     # Energy Profile
-    PE1 = 0.5*k1*(del1**2)
+    PE1 = (del1**2)*k1.mean()*0.5
     KE1 = 0.5*m*(data_o[dotx1]**2+data_o[dotx2]**2)
     TE1 = KE1-PE1
     
@@ -194,7 +207,7 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['KE1'] = KE1
     data_o['TE1'] = TE1
 
-    PE2 = 0.5*k2*(del2**2)
+    PE2 = (del2**2)*k2.mean()*0.5
     KE2 = 0.5*m*(data_o[dotx1]**2+data_o[dotx2]**2)
     TE2 = KE2-PE2
     
@@ -215,9 +228,10 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o.fillna(0,inplace=True)
 
     for col in data_o.columns[data_o.columns.get_loc('v1t_1'):]:
-        # data_o[col] = (data_o[col]-data_o[col].mean())/data_o[col].std()
-        data_o[col] = data_o[col]/np.abs(data_o[col]).max()
-        data_o[col] = data_o[col].replace([np.inf, -np.inf], np.nan)
-        data_o[col] = data_o[col].fillna(np.abs(data_o[col]).max())
+        if col != 'idposc':
+            data_o[col] = (data_o[col]-data_o[col].mean())/data_o[col].std()
+            data_o[col] = data_o[col]/np.abs(data_o[col]).max()
+            data_o[col] = data_o[col].replace([np.inf, -np.inf], np.nan)
+            data_o[col] = data_o[col].fillna(np.abs(data_o[col]).max())
 
     return data_o

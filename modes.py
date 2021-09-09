@@ -8,7 +8,6 @@ import plots
 def stream_r(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that test
     # N days have already been processed tst
-
     for row in data.index:
         try:
             print(f'\n - Processing Frame #{row.value}: start:{min(data.index)} end:{max(data.index)}\n')
@@ -31,10 +30,9 @@ def stream_r(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        data_n = misc.normalizedf(data_o)
         data_f,alpha = freq.fourier_analysis(Fs
                                 ,obv
-                                ,data_n
+                                ,data_o
                                 )
         plots.showplots(df1=data_f,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)        
 
@@ -50,7 +48,7 @@ def stream_e(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff
 
     for t in range(N,len(data)):
         try:
-            print(f'\n- Processing Frame #{t}: start:{min(data_n.index)} end:{max(data_n.index)}\n')
+            print(f'\n- Processing Frame #{t}: start:{min(data_s.index)} end:{max(data_s.index)}\n')
         except KeyboardInterrupt:
             break
 
@@ -68,21 +66,19 @@ def stream_e(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        data_n = misc.normalizedf(data_o)
         data_f,alpha = freq.fourier_analysis( Fs
                                         ,obv
-                                        ,data_n
+                                        ,data_o
                                         )
         plots.showplots(df1=data_f,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)  
 
-        data_s = data_f.append(data_n.iloc[t])        
+        data_s = data_f.append(data.iloc[t])        
 
     print('- expanding backtest complete...')
 
     return data_s
    
 def dump(data,Fs,windows,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
-
     data_p = mod.point_sys(data,size=3)
     data_d = mod.ddm(   data=data_p
                         ,diff_offset=diff_offset
@@ -95,10 +91,9 @@ def dump(data,Fs,windows,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
                                 ,m=m
                                 ,obv=obv
                                 )
-    data_n = misc.normalizedf(data_o)
     data_f,alpha  = freq.fourier_analysis(Fs
                                     ,obv
-                                    ,data_n
+                                    ,data_o
                                     )
 
     plots.showplots(df1=data_f,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 

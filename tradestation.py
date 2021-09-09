@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 def main(argv):
     # PARAMETERS
     harms       = 9
-    sr          = 0.1
+    sr          = 0.125
     alpha       = 1
     N           = 7
     Fs          = round(1/sr,3)
@@ -28,9 +28,9 @@ def main(argv):
     m           = 1
     refresh     = 0.04
     windows     = [24,24*7,24*30]
-    start       = dt(2018,1,1,0,0,0); stop = dt(2018,2,1,00,00,00)
+    start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
     asset       = 'ETH-USD'
-    interval    = '5minutes'
+    interval    = '1hour'
     mode        = 'dump'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'

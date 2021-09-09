@@ -23,10 +23,11 @@ def progress_bar(x,load_text):
 
 def normalizedf(data):
     #Normalize the values
+    data=data
     for col in data.columns:
         if col !='idposc':
-            data[col] = (data[col]-data[col].mean())/data[col].std()
-            data[col] = data[col]/np.abs(data[col]).max()
+            # data[col] = (data[col]-data[col].mean())/data[col].mean()
+            data[col] = data[col].div(np.abs(data[col].max()),axis=0)
 
     # data_a = data.drop('idposc',axis=1)
     # Scaler = preprocessing.MinMaxScaler(feature_range=(-1,1))
