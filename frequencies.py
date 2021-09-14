@@ -9,12 +9,12 @@ def fourier_analysis(Fs, obv, data_s):
                                 ,col=col
                                 ,Fs=Fs
                                         )
-        data_r,alpha  = get_tfreq( data=data_af
+        data_r  = get_tfreq( data=data_af
                                 ,col=col
                                 ,Fs=Fs
                                 )
         data_f = data_r
-    return data_r, alpha
+    return data_r
 
 def harmonics(alpha,harms=9,type='harm_mlt'):
 # HARMONICS
@@ -45,19 +45,16 @@ def get_tfreq(data,col,Fs):
 
     fft_list = np.asarray(data_i[f'd{col}1t_o'].tolist())
 
-
-    f,s = pe(data_i.dv1t_o,fs=Fs)
-    alpha = int(np.ceil(f[s == s.max()][0]))
     data_i[f'{col}f_t'] = np.fft.ifft(np.fft.fft(np.copy(fft_list)))
-    _num_ = 0
-    comp = [alpha*x for x in range(1,10)]
-    for num_ in comp:
-        bnd                     = num_
-        fft_listm10             = np.copy(fft_list)
-        fft_listm10[bnd:-bnd]   = 0
-        data_i[f'{col}f_t'+str(bnd)]  =np.real(np.fft.ifft(fft_listm10))
-        _num_                   = bnd
+    # _num_ = 0
+    # comp = [alpha*x for x in range(1,10)]
+    # for num_ in comp:
+    #     bnd                     = num_
+    #     fft_listm10             = np.copy(fft_list)
+    #     fft_listm10[bnd:-bnd]   = 0
+    #     data_i[f'{col}f_t'+str(bnd)]  =np.real(np.fft.ifft(fft_listm10))
+    #     _num_                   = bnd
 
     data_i.fillna(0,inplace=True)
 
-    return data_i, alpha
+    return data_i

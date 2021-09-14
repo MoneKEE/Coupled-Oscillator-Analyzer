@@ -9,7 +9,7 @@ from datetime import datetime as dt
 import datacapture as dc
 import models as mod
 
-def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2021,8,1),Fs=8,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
+def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,10),Fs=8,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -27,12 +27,12 @@ def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2021,8,1),Fs=8,interval='
                                 ,m=m
                                 ,obv=obv
                                 )
-    data_f,alpha  = freq.fourier_analysis(Fs
+    data_f  = freq.fourier_analysis(Fs
                                     ,obv
                                     ,data_o
                                     )
 
-    plots.showplots(data_f,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
+    plots.showplots(data_f,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
 
     print('- Dump Complete...')
     return data_f

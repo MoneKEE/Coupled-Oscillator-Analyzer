@@ -60,6 +60,8 @@ def get_data_span(asset,start,stop,interval,mode):
     data['v']    = data['v'].round(3)
     data         = data.iloc[:data.index.get_loc(stop),:]
 
+    data['idposc'] = 0
+
     data = data.round(decimals=3)
     
     print(f'\nData acquired. Total data points:{data.shape[0]}')

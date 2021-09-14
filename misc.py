@@ -21,25 +21,18 @@ def progress_bar(x,load_text):
       
     return bar
 
-def normalizedf(data):
+def normalizedf(data,type='max'):
     #Normalize the values
-    data=data
     for col in data.columns:
-        if col !='idposc':
-            # data[col] = (data[col]-data[col].mean())/data[col].mean()
-            data[col] = data[col].div(np.abs(data[col].max()),axis=0)
+        if col not in ['Pxa','Ffa','Fta','Maa','Qfa','Dra','Wka','Rfa']:
+            data[col] = data[col].replace([np.inf, -np.inf], np.nan)
+            data[col] = data[col].fillna(np.abs(data[col]).max())
+            if type == 'max':
+                data[col] = data[col]/np.abs(data[col]).max()
+            else:
+                data[col] = (data[col]-data[col].mean())/data[col].std()
 
-    # data_a = data.drop('idposc',axis=1)
-    # Scaler = preprocessing.MinMaxScaler(feature_range=(-1,1))
-    # data_t = pd.DataFrame(Scaler.fit_transform(data_a),index=data_a.index,columns=data_a.columns)
-
-    data_t=data.copy()
-
-    for col in data_t.columns:
-        data_t[col] = data_t[col].replace([np.inf, -np.inf], np.nan)
-        data_t[col] = data_t[col].fillna(np.abs(data_t[col]).max())
-
-    return data_t
+    return data
 
 def serial_todt(x,format='%y/%m/%d %H'):
     for i in range(len(x)):

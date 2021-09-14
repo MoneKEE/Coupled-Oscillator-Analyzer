@@ -8,6 +8,7 @@ where dP(t) = P(t) - P(t-n) and dV(t) = V(t) - V(t-n)
 from datetime import datetime as dt
 import datacapture as dc
 import pandas as pd
+import misc
 import modes
 import sys, getopt
 
@@ -30,7 +31,7 @@ def main(argv):
     windows     = [24,24*7,24*30]
     start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
     asset       = 'ETH-USD'
-    interval    = '1hour'
+    interval    = '15minutes'
     mode        = 'dump'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
@@ -89,6 +90,7 @@ def main(argv):
                                 ,interval=interval
                                 ,mode=mode
                                 ) 
+    df_master = misc.normalizedf(df_master,'std')
 
     params      = pd.DataFrame( [mode,harms,obv[0],obv[1],Fs,asset,interval,len(df_master)]
                                 ,index=['Mode','n Harmonics','obv1','obv2','Fs','Asset','Interval','n Points']

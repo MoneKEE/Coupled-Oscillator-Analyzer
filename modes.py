@@ -30,11 +30,12 @@ def stream_r(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
-        data_f,alpha = freq.fourier_analysis(Fs
+        data_n = misc.normalizedf(data=data_o)
+        data_f = freq.fourier_analysis(Fs
                                 ,obv
-                                ,data_o
+                                ,data_n
                                 )
-        plots.showplots(df1=data_f,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)        
+        plots.showplots(df1=data_f,caller='stream',Fs=Fs,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
@@ -66,11 +67,12 @@ def stream_e(data,harms,Fs,windows,mode,refresh,obv=['v','c'],diff_offset=1,diff
                                     ,obv=obv
                                     ,Fs=Fs
                                     )
+        data_n = misc.normalizedf(data=data_o)
         data_f,alpha = freq.fourier_analysis( Fs
                                         ,obv
-                                        ,data_o
+                                        ,data_n
                                         )
-        plots.showplots(df1=data_f,caller='stream',alpha=alpha,Fs=Fs,obv=obv,refresh=refresh)  
+        plots.showplots(df1=data_f,caller='stream',Fs=Fs,obv=obv,refresh=refresh)  
 
         data_s = data_f.append(data.iloc[t])        
 
@@ -91,12 +93,13 @@ def dump(data,Fs,windows,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
                                 ,m=m
                                 ,obv=obv
                                 )
-    data_f,alpha  = freq.fourier_analysis(Fs
+    data_n = misc.normalizedf(data=data_o)
+    data_f  = freq.fourier_analysis(Fs
                                     ,obv
-                                    ,data_o
+                                    ,data_n
                                     )
 
-    plots.showplots(df1=data_f,alpha=alpha,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
+    plots.showplots(df1=data_f,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
 
     print('- Dump Complete...')
 
