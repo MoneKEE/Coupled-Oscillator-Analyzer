@@ -109,7 +109,7 @@ def showplots(df1,obv,Fs,refresh=0.5,caller='dump',asset='ETH-USD'):
         ax11.step(dates_idx,df1.TE1,label='TE1',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.TE2,label='TE2',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.idpos1,label='pos1',linewidth=0.8,linestyle='dotted', alpha=0.8)
-        ax11.step(dates_idx,df1.idpos2,label='pos2',linewidth=0.8,linestyle='dotted', alpha=0.8)
+        # ax11.step(dates_idx,df1.idpos2,label='pos2',linewidth=0.8,linestyle='dotted', alpha=0.8)
         ax11.step(dates_idx,df1.Ftm,label='Fx',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.Qfm,label='Qx',linewidth=1,linestyle='dotted')
         ax11.step(dates_idx,df1.Drm,label='Drx',linewidth=1,linestyle='dotted')

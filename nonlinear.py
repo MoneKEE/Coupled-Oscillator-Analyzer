@@ -31,8 +31,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     r1mag = np.sqrt((r1['e1']**2)+(r1['e2'])**2)
     r2mag = np.sqrt((r2['e1']**2)+(r2['e2'])**2)
 
-    # er1 = r1.divide(r1mag,axis=0)
-    # er2 = r2.divide(r2mag,axis=0)
+    er1 = r1.divide(r1mag,axis=0)
+    er2 = r2.divide(r2mag,axis=0)
 
     del1 = r1mag - l1
     del2 = r2mag - l2
@@ -64,10 +64,10 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     x2_0 = 0
 
     vals = data_o[x1].value_counts()
-    dotx1_0 = vals[vals.index!=0][vals==vals.max()].index.values[0]
+    dotx1_0 = (data_o[dotx1].describe()['75%'] - data_o[dotx1].describe()['25%'])/2
 
     vals = data_o[x2].value_counts()
-    dotx2_0 = vals[vals.index!=0][vals==vals.max()].index.values[0]
+    dotx2_0 = (data_o[dotx1].describe()['75%'] - data_o[dotx1].describe()['25%'])/2
 
     t = np.arange(0,len(data_o))
 
@@ -194,11 +194,18 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['TE2'] = TE2
 
     # Work Profile
-    wrk1 = ft1*del1
-    wrk2 = ft2*del2
+    wrk1 = ft1*data_o[x1]
+    wrk2 = ft2*data_o[x2]
 
     data_o['wrk1'] = wrk1
     data_o['wrk2'] = wrk2
+
+    # Power
+    pwr1 = wrk1-wrk1.shift(1)
+    pwr2 = wrk2-wrk2.shift(1)
+
+    data_o['pwr1'] = pwr1
+    data_o['pwr2'] = pwr2
 
     data_o.fillna(0,inplace=True)
 
@@ -270,6 +277,23 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['Wka'] = np.arctan2(wrk2,wrk1) 
     data_o['Wkt'] = Wkt
 
+    # Power
+    Pwm = np.sqrt(pwr1**2 + pwr2**2)
+    Pwa = np.arctan2(pwr2,pwr1)
+    Pwt = Pwm*np.sin(Pwa) + Pwm*np.cos(Pwa)
+
+    data_o['Pwm'] = np.sqrt(pwr1**2+pwr2**2)
+    data_o['Pwa'] = np.arctan2(pwr2,pwr1) 
+    data_o['Pwt'] = Pwt
+
+    # Torque
+    # Still trying to figure this part out
+    r=[[data_o[x1][i],data_o[x2][i]] for i in range(len(data_o))]
+    f=[[data_o['ft1'][i],data_o['ft2'][i]] for i in range(len(data_o))]
+
+    Trq = np.cross(r,f)
+    data_o['Trq'] = Trq
     data_o.fillna(0,inplace=True)
 
     return data_o
+    
