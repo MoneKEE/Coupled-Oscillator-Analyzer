@@ -6,7 +6,7 @@ def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1,tgt=0.8):
 
     print('- Creating addtional features...\n')
 
-    data_m[f'idpos1'] = np.where((data_m.dc1t_o > data_m.dc1t_o.quantile(tgt))
+    data_m[f'idpos1'] = np.where((data_m.dc1t_o > 0)
                                         ,1
                                         ,0
                                         )

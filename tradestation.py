@@ -51,26 +51,22 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:p:s:a:w:n:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','mass=','win='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:',['mode=','from=','thru=','interval=','sr=','mass=','win='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
+        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling rate> -w <system mass> -n <window>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
+            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling rate> -w <system mass> -n <window>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
         elif opt in ('-i','int'):
             interval = arg
-        elif opt in ('-p','periods'):
-            harms = int(arg)
         elif opt in ('-s', 'sr'):
             sr = float(arg)
             Fs = round(1/float(sr),3)
-        elif opt in ('-a','alpha'):
-            alpha = int(arg)
         elif opt in ('-w', 'mass'):
             m = float(arg)
         elif opt in ('-f', 'from'):
@@ -80,10 +76,6 @@ def main(argv):
         elif opt in ('-n', 'win'):
             N = int(arg)
 
-    # comp        = freq.harmonics(harms=harms
-    #                             ,alpha=alpha
-    #                             ,type='harm_mlt'
-    #                             )
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
                                 ,stop=stop
@@ -92,8 +84,8 @@ def main(argv):
                                 ) 
     df_master = misc.normalizedf(df_master,'std')
 
-    params      = pd.DataFrame( [mode,harms,obv[0],obv[1],Fs,asset,interval,len(df_master)]
-                                ,index=['Mode','n Harmonics','obv1','obv2','Fs','Asset','Interval','n Points']
+    params      = pd.DataFrame( [mode,obv[0],obv[1],Fs,asset,interval,len(df_master)]
+                                ,index=['Mode','obv1','obv2','Fs','Asset','Interval','n Points']
                                 ,columns=['parameters']
                                 )
 

@@ -24,10 +24,11 @@ def progress_bar(x,load_text):
 def normalizedf(data,type='max'):
     #Normalize the values
     for col in data.columns:
-        if col not in ['Pxa','Ffa','Fta','Maa','Qfa','Dra','Wka','Rfa']:
+        if col not in ['Pxa','Ffa','Fta','Maa','Qfa','Dra','Wka','Rfa','idpos1']:
             data[col] = data[col].replace([np.inf, -np.inf], np.nan)
             data[col] = data[col].fillna(np.abs(data[col]).max())
             if type == 'max':
+                data[col] = (data[col]-data[col].mean())/data[col].std()
                 data[col] = data[col]/np.abs(data[col]).max()
             else:
                 data[col] = (data[col]-data[col].mean())/data[col].std()

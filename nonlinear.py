@@ -89,6 +89,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['x1_pr'] = x1_pr
     data_o['x2_pr'] = x2_pr
 
+
+
     l1_n = x1_gn.shift(1)
     l2_n = x2_gn.shift(1)
 
@@ -110,8 +112,8 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o.fillna(0,inplace=True)
 
     ## FORCED SYSTEM FORCES
-    ft1 = m*data_o[ddotx1] + al1*k1*(data_o[x1]+l1) + al2*k2*data_o[x1]
-    ft2 = m*data_o[ddotx2] + al2*k2*(data_o[x2]+l2) + al1*k1*data_o[x2]
+    ft1 = ma1.val + al1*k1*(data_o[x1]+l1) + al2*k2*data_o[x1]
+    ft2 = ma2.val + al2*k2*(data_o[x2]+l2) + al1*k1*data_o[x2]
 
     ff1 = ft1.subtract(ma1.val,axis=0)
     ff2 = ft2.subtract(ma2.val,axis=0)
@@ -136,6 +138,19 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
 
     data_o['w1_n'] = w1_n
     data_o['w2_n'] = w2_n
+
+    # Part to Gen Ratio
+    Xpr1 = x1_pr/data_o[x1]
+    Xgr1 = x2_gn.val/data_o[x1]
+
+    Xpr2 = x2_pr/data_o[x2]
+    Xgr2 = x2_gn.val/data_o[x2]
+
+    data_o['Xpr1'] = Xpr1
+    data_o['Xgr1'] = Xgr1
+
+    data_o['Xpr2'] = Xpr2
+    data_o['Xgr2'] = Xgr2
 
     # damping ratio
     dr1 = (al1*k1).divide(2*np.sqrt(m*k1),axis=0)
@@ -192,6 +207,20 @@ def dual_oscillator(data,Fs,obv=['v','c'],m=1):
     data_o['PE2'] = PE2
     data_o['KE2'] = KE2
     data_o['TE2'] = TE2
+
+    Kr1 = KE1/TE1 
+    Pr1 = PE1/TE1
+
+    TEr = TE1/TE2
+
+    data_o['Kr1'] = Kr1
+    data_o['Pr1'] = Pr1
+
+    Kr2 = KE2/TE2 
+    Pr2 = PE2/TE2
+
+    data_o['Kr2'] = Kr2
+    data_o['Pr2'] = Pr2
 
     # Work Profile
     wrk1 = ft1*data_o[x1]
