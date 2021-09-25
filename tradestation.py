@@ -20,15 +20,13 @@ warnings.filterwarnings('ignore')
 def main(argv):
     # PARAMETERS
     harms       = 9
-    sr          = 0.125
     alpha       = 1
     N           = 7
-    Fs          = round(1/sr,3)
+    F          = 2
     diff_offset = 1
     diff        = 1
     m           = 1
     refresh     = 0.04
-    windows     = [24,24*7,24*30]
     start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
     asset       = 'ETH-USD'
     interval    = '15minutes'
@@ -51,22 +49,22 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:',['mode=','from=','thru=','interval=','sr=','mass=','win='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:r:',['mode=','from=','thru=','interval=','fs=','mass=','win=','ref='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling rate> -w <system mass> -n <window>')
+        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling rate> -w <system mass> -n <window>')
+            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
         elif opt in ('-i','int'):
             interval = arg
         elif opt in ('-s', 'sr'):
-            sr = float(arg)
-            Fs = round(1/float(sr),3)
+            t = float(arg)
+            F = t
         elif opt in ('-w', 'mass'):
             m = float(arg)
         elif opt in ('-f', 'from'):
@@ -75,6 +73,8 @@ def main(argv):
             stop = pd.to_datetime(arg)
         elif opt in ('-n', 'win'):
             N = int(arg)
+        elif opt in ('-r', 'ref'):
+            refresh = float(arg)
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -84,11 +84,10 @@ def main(argv):
                                 ) 
     df_master = misc.normalizedf(df_master,'std')
 
-    params      = pd.DataFrame( [mode,obv[0],obv[1],Fs,asset,interval,len(df_master)]
-                                ,index=['Mode','obv1','obv2','Fs','Asset','Interval','n Points']
+    params      = pd.DataFrame( [mode,obv[0],obv[1],F,asset,interval,len(df_master)]
+                                ,index=['Mode','obv1','obv2','F','Asset','Interval','n Points']
                                 ,columns=['parameters']
                                 )
-
     print(params)
 
     if mode=='stream_e':
@@ -97,12 +96,10 @@ def main(argv):
                             ,diff=diff
                             ,obv=obv
                             ,harms=harms
-                            ,Fs=Fs
+                            ,F=F
                             ,refresh=refresh
-                            
                             ,m=m
                             ,mode=mode
-                            ,windows=windows
                             ,N=N
                             )
     elif mode=='stream_r':
@@ -111,12 +108,10 @@ def main(argv):
                             ,diff=diff
                             ,obv=obv
                             ,harms=harms
-                            ,Fs=Fs
+                            ,F=F
                             ,refresh=refresh
-                            
                             ,m=m
                             ,mode=mode
-                            ,windows=windows
                             ,N=N
                             )
     # Run dump
@@ -124,13 +119,11 @@ def main(argv):
         dd = modes.dump( data=df_master
                             ,diff_offset=diff_offset
                             ,diff=diff
-                            ,Fs=Fs
-                            ,windows=windows
+                            ,F=F
                             ,refresh=refresh
                             ,m=m
                             ,obv=obv
                             )
-
 
 if __name__ == '__main__':
     main(sys.argv[1:]) 

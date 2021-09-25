@@ -21,21 +21,22 @@ def progress_bar(x,load_text):
       
     return bar
 
-def normalizedf(data,type='max'):
+def normalizedf(data,rtype='max',s=5):
+    datac = data.copy()
+
     #Normalize the values
-    for col in data.columns:
-        if col not in ['Pxa','Ffa','Fta','Maa','Qfa','Dra','Wka','Rfa','idpos1']:
-            data[col] = data[col].replace([np.inf, -np.inf], np.nan)
-            data[col] = data[col].fillna(np.abs(data[col]).max())
-            if type == 'max':
-                data[col] = (data[col]-data[col].mean())/data[col].std()
-                data[col] = data[col]/np.abs(data[col]).max()
+    for col in datac.columns[s:]:
+        if col not in ['idpos1','quad_abs','x1pol','x2pol']:
+            datac[col] = datac[col].replace([np.inf, -np.inf], np.nan)
+            datac[col] = datac[col].fillna(np.abs(datac[col]).max())
+            if rtype == 'max':
+                datac[col+'nm'] = datac[col]/np.abs(datac[col]).max()
             else:
-                data[col] = (data[col]-data[col].mean())/data[col].std()
+                datac[col+'nm'] = (datac[col]-datac[col].mean())/datac[col].std()
 
-    return data
+    return datac
 
-def serial_todt(x,format='%y/%m/%d %H'):
-    for i in range(len(x)):
-        x[i] = pd.to_datetime(x[i],format)
-    return x
+def get_roots(inp):
+    dcply = np.polynomial.Polynomial.fit(np.arange(0,len(inp)),inp.values,deg=2)
+
+    return dcply

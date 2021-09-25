@@ -5,12 +5,22 @@ import pandas as pd
 import frequencies as freq
 import nonlinear as nl
 import plots
+import matplotlib.pyplot as plt
 from datetime import datetime as dt
 import datacapture as dc
 import models as mod
+import misc
+import warnings
 
-def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,10),Fs=8,interval='1hour',mode='dump',windows=[24,24*7,24*30],obv=['v','c'],m=1,refresh=0.5):
+pd.plotting.register_matplotlib_converters()
 
+def warn(*args,**kwargs):
+    pass
+
+warnings.warn=warn
+
+def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,20),interval='5minutes',F=2,mode='dump',obv=['c','v'],m=1,refresh=0.5):
+    
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
                                 ,stop=stop
@@ -19,23 +29,23 @@ def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,10),Fs=8,interval=
                                 ) 
     data_p = mod.point_sys(df_master,size=3)
     data_d = mod.ddm(   data=data_p
-                        ,obv=obv
-                        ,windows=windows
                         )
-    data_o = nl.dual_oscillator(data=data_d
-                                ,Fs=Fs
+    data_n = misc.normalizedf(data_d)
+    data_c = freq.complex_coords(data_n,[data_n.x1nm,data_n.x2nm])
+    data_o = nl.dual_oscillator(data=data_c
+                                ,F=F
                                 ,m=m
                                 ,obv=obv
                                 )
-    data_f  = freq.fourier_analysis(Fs
-                                    ,obv
-                                    ,data_o
-                                    )
-
-    plots.showplots(data_f,caller='dump',Fs=Fs,obv=obv,refresh=refresh) 
+    idx = data_o.columns.get_loc('al1')
+    data_n = misc.normalizedf(data_o,s=idx)
+    plots.showplots(data_n,caller='dump',F=F,obv=obv,refresh=refresh) 
+    data_n[['x2nm','x2prnm','x2gnnm']].plot()
+    plt.show()
+    breakpoint()
 
     print('- Dump Complete...')
-    return data_f
+    return data_n
 
 if __name__ == '__main__':
     testbed() 
