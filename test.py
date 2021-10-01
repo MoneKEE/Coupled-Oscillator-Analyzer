@@ -19,7 +19,7 @@ def warn(*args,**kwargs):
 
 warnings.warn=warn
 
-def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,20),interval='5minutes',F=2,mode='dump',obv=['c','v'],m=1,refresh=0.5):
+def testbed(asset='ETH-USD',start=dt(2020,9,1),stop=dt(2020,9,29),interval='5minutes',F=7,mode='dump',obv=['c','v'],m=1,refresh=0.5):
     
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -30,19 +30,15 @@ def testbed(asset='ETH-USD',start=dt(2020,8,1),stop=dt(2020,8,20),interval='5min
     data_p = mod.point_sys(df_master,size=3)
     data_d = mod.ddm(   data=data_p
                         )
-    data_n = misc.normalizedf(data_d)
-    data_c = freq.complex_coords(data_n,[data_n.x1nm,data_n.x2nm])
-    data_o = nl.dual_oscillator(data=data_c
-                                ,F=F
-                                ,m=m
-                                ,obv=obv
-                                )
-    idx = data_o.columns.get_loc('al1')
-    data_n = misc.normalizedf(data_o,s=idx)
-    plots.showplots(data_n,caller='dump',F=F,obv=obv,refresh=refresh) 
-    data_n[['x2nm','x2prnm','x2gnnm']].plot()
-    plt.show()
-    breakpoint()
+    data_o = nl.dualosc2(data=data_d
+                            ,F=F
+                            ,m=m
+                            )
+    data_n = misc.normalizedf(data_o,'max')
+    # plots.showplots2(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)  
+    # data_n[['x2nm','x2prnm','x2gnnm']].plot()
+    # plt.show()
+    # breakpoint()
 
     print('- Dump Complete...')
     return data_n

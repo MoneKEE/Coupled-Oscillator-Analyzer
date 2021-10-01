@@ -1,6 +1,7 @@
 import nonlinear as nl
 import misc
 from datetime import timedelta
+import numpy as np
 import models as mod
 import frequencies as freq
 import plots
@@ -19,20 +20,16 @@ def stream_r(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=
         data_p = mod.point_sys(data_i,size=3)
         data_d = mod.ddm(   data=data_p
                             )
-        data_n = misc.normalizedf(data_d)
-        data_c = freq.complex_coords(data_n,[data_n.x1nm,data_n.x2nm])
-        data_o = nl.dual_oscillator(data=data_c
-                                    ,F=F
-                                    ,m=m
-                                    ,obv=obv
-                                    )
-        idx = data_o.columns.get_loc('al1')
-        data_n = misc.normalizedf(data_o,s=idx)
-        plots.showplots(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)        
+        data_o = nl.dualosc2(data=data_d
+                                ,F=F
+                                ,m=m
+                                )
+        data_n = misc.normalizedf(data_o,'max')
+        plots.showplots2(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
-    return data_n
+    return data_o
 
 
 def stream_e(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
@@ -73,16 +70,12 @@ def dump(data,F,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
                             )
     data_m  = mod.ddm(  data=data_p
                         )
-    data_n = misc.normalizedf(data_m)
-
-    data_c  = freq.complex_coords(data_n,x=[data_n.x1nm,data_n.x2nm])
-    data_o = nl.dual_oscillator(data=data_c
+    data_o = nl.dualosc2(data=data_m
                                 ,m=m
                                 ,obv=obv
                                 ,F=F
                                 )
-    idx = data_o.columns.get_loc('al1')
-    data_n = misc.normalizedf(data_o,s=idx)
+    data_n = misc.normalizedf(data_o,'std')
     plots.showplots(df1=data_n,caller='dump',F=F,obv=obv,refresh=refresh) 
 
     print('- Dump Complete...')

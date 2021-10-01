@@ -15,10 +15,7 @@ def ddm(data,tgt=0.8):
     data_m['x2pol'] = np.where(data_m[x2]>0,1,np.where(data_m[x2]<0,-1,0))
 
     data_m['quad_abs'] = np.where((data_m[x2]>0) & (data_m[x1]>0),1,np.where((data_m[x2]>0) & (data_m[x1]<0),2,np.where((data_m[x2]<0) & (data_m[x1]>0),3,4)))
-    data_m['idpos1'] = np.where((data_m[x2].shift(-1) >= 1.5*data_m[x2])
-                                        ,1
-                                        ,0
-                                        )
+    data_m['pos'] = np.where(data_m.d1dotx2>0,1,np.where(data_m.d1dotx2<0,-1,0))
     
     # data_m[f'{x1}_avg_cum'] = data[x1].expanding().mean()
     # data_m[f'{x2}_avg_cum'] = data[x2].expanding().mean()

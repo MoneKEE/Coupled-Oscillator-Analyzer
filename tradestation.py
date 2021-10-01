@@ -30,7 +30,7 @@ def main(argv):
     start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
     asset       = 'ETH-USD'
     interval    = '15minutes'
-    mode        = 'dump'
+    mode        = 'stream_r'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
                     ,'dv2t_oo','dc2t_oo'

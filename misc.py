@@ -21,18 +21,18 @@ def progress_bar(x,load_text):
       
     return bar
 
-def normalizedf(data,rtype='max',s=5):
+def normalizedf(data,rtype='max'):
     datac = data.copy()
 
     #Normalize the values
-    for col in datac.columns[s:]:
-        if col not in ['idpos1','quad_abs','x1pol','x2pol']:
-            datac[col] = datac[col].replace([np.inf, -np.inf], np.nan)
-            datac[col] = datac[col].fillna(np.abs(datac[col]).max())
+    for col in datac.columns:
+        if col not in ['quad_abs','x1pol','x2pol','w1o','w1','w2o','w2','pos','Pxa','Pwa','Maa','Fta','Ffa']:
+            # datac[col] = datac[col].replace([np.inf, -np.inf], np.nan)
+            # datac[col] = datac[col].fillna(np.abs(datac[col]).max())
             if rtype == 'max':
-                datac[col+'nm'] = datac[col]/np.abs(datac[col]).max()
+                datac[col] = datac[col]/np.max(datac[col].abs())
             else:
-                datac[col+'nm'] = (datac[col]-datac[col].mean())/datac[col].std()
+                datac[col] = (datac[col]-datac[col].mean())/datac[col].std()
 
     return datac
 
