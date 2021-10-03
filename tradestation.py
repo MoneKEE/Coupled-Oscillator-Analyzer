@@ -49,14 +49,14 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:r:',['mode=','from=','thru=','interval=','fs=','mass=','win=','ref='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:r:c:',['mode=','from=','thru=','interval=','fs=','mass=','win=','ref=','chord='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh>')
+        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh>')
+            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
@@ -75,6 +75,8 @@ def main(argv):
             N = int(arg)
         elif opt in ('-r', 'ref'):
             refresh = float(arg)
+        elif opt in ('-c', 'chord'):
+            hrm = arg
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -98,6 +100,7 @@ def main(argv):
                             ,harms=harms
                             ,F=F
                             ,refresh=refresh
+                            ,hrm=hrm
                             ,m=m
                             ,mode=mode
                             ,N=N
@@ -110,6 +113,7 @@ def main(argv):
                             ,harms=harms
                             ,F=F
                             ,refresh=refresh
+                            ,hrm=hrm
                             ,m=m
                             ,mode=mode
                             ,N=N
@@ -121,6 +125,7 @@ def main(argv):
                             ,diff=diff
                             ,F=F
                             ,refresh=refresh
+                            ,hrm=hrm
                             ,m=m
                             ,obv=obv
                             )

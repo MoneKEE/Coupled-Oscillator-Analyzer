@@ -19,7 +19,7 @@ def warn(*args,**kwargs):
 
 warnings.warn=warn
 
-def testbed(asset='ETH-USD',start=dt(2020,9,1),stop=dt(2020,9,29),interval='5minutes',F=7,mode='dump',obv=['c','v'],m=1,refresh=0.5):
+def testbed(asset='ETH-USD',start=dt(2020,9,1),stop=dt(2020,9,15),hrm='all',interval='1minute',F=131072,mode='dump',obv=['c','v'],m=1,refresh=0.5):
     
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -33,12 +33,13 @@ def testbed(asset='ETH-USD',start=dt(2020,9,1),stop=dt(2020,9,29),interval='5min
     data_o = nl.dualosc2(data=data_d
                             ,F=F
                             ,m=m
+                            ,hrm=hrm
                             )
-    data_n = misc.normalizedf(data_o,'max')
-    # plots.showplots2(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)  
-    # data_n[['x2nm','x2prnm','x2gnnm']].plot()
+    data_n = misc.normalizedf(data_o,'std')
+    #plots.showplots2(df1=data_n,caller='stream',F=F,m=m,obv=obv,refresh=refresh)  
+    # data_n[['Trq']].plot()
     # plt.show()
-    # breakpoint()
+    breakpoint()
 
     print('- Dump Complete...')
     return data_n

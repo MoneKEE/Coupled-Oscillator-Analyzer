@@ -6,7 +6,7 @@ import models as mod
 import frequencies as freq
 import plots
 
-def stream_r(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+def stream_r(data,harms,F,mode,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that test
     # N days have already been processed tst
     for row in data.index:
@@ -23,16 +23,17 @@ def stream_r(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=
         data_o = nl.dualosc2(data=data_d
                                 ,F=F
                                 ,m=m
+                                ,hrm=hrm
                                 )
-        data_n = misc.normalizedf(data_o,'max')
-        plots.showplots2(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)        
+        data_n = misc.normalizedf(data_o,'std')
+        plots.showplots(df1=data_n,m=m,caller='stream',F=F,obv=obv,refresh=refresh)        
 
     print('- rolling backtest complete...')
 
     return data_o
 
 
-def stream_e(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+def stream_e(data,harms,F,mode,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that 
     # N days have already been processed
     data_s = data[:N].copy()
@@ -51,12 +52,13 @@ def stream_e(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=
         data_c  = freq.complex_coords(data_p,x=[data_p.dv1dt1nm,data_p.dc1dt1nm])
         data_m  = mod.ddm(  data=data_c
                             )
-        data_o = nl.dual_oscillator(data=data_m
+        data_o = nl.dualosc2(data=data_m
                                     ,m=m
                                     ,obv=obv
                                     ,F=F
                                     )
-        plots.showplots(df1=data_o,caller='stream',F=F,obv=obv,refresh=refresh)  
+        data_n = misc.normalizedf(data_o,'std')
+        plots.showplots(df1=data_n,caller='stream',F=F,obv=obv,refresh=refresh)  
 
         data_s = data_o.append(data.iloc[t])        
 
@@ -64,7 +66,7 @@ def stream_e(data,harms,F,mode,refresh,obv=['v','c'],diff_offset=1,diff=1,m=1,N=
 
     return data_s
    
-def dump(data,F,refresh,m=1,obv=['v','c'],diff_offset=1,diff=1):
+def dump(data,F,refresh,hrm,m=1,obv=['v','c'],diff_offset=1,diff=1):
     data_p = mod.point_sys( data=data
                             ,size=3
                             )
