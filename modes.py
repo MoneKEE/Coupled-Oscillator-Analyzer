@@ -5,8 +5,10 @@ import numpy as np
 import models as mod
 import frequencies as freq
 import plots
+import mlmod
+import pandas as pd
 
-def stream_r(data,harms,F,mode,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
+def stream_r(data,F,mode,asset,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=1,N=7):
     # At the start it is assumed that test
     # N days have already been processed tst
     for row in data.index:
@@ -20,13 +22,28 @@ def stream_r(data,harms,F,mode,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=
         data_p = mod.point_sys(data_i,size=3)
         data_d = mod.ddm(   data=data_p
                             )
-        data_o = nl.dualosc2(data=data_d
+        data_o,qw = nl.dualosc2(data=data_d
                                 ,F=F
                                 ,m=m
                                 ,hrm=hrm
                                 )
         data_n = misc.normalizedf(data_o,'std')
-        plots.showplots(df1=data_n,m=m,caller='stream',F=F,obv=obv,refresh=refresh)        
+
+        endog = data_n.loc[:,'Pe':'Spd']
+        exog  = data_n.pos
+        try: 
+            clf=clf.partial_fit(endog,exog)
+            ypred = clf.predict(endog)
+            posa = posa.shift(-1)
+            posa.iloc[-1] = ypred[-1]
+            posa.fillna(0,inplace=True)
+        except UnboundLocalError:
+            clf = mlmod.MLP(endog,exog,asset='ETH-USD')
+            ypred = clf.predict(endog)
+            posa = pd.Series(ypred)
+            
+        data_n['posa'] = posa.reset_index(drop=True)
+        plots.showplots(df1=data_n,m=m,caller='stream',qw=qw,asset=asset,F=F,obv=obv,refresh=refresh,hrm=hrm)        
 
     print('- rolling backtest complete...')
 
@@ -66,20 +83,19 @@ def stream_e(data,harms,F,mode,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=
 
     return data_s
    
-def dump(data,F,refresh,hrm,m=1,obv=['v','c'],diff_offset=1,diff=1):
+def dump(data,harms,F,mode,asset,refresh,hrm,obv=['v','c'],diff_offset=1,diff=1,m=1):
     data_p = mod.point_sys( data=data
                             ,size=3
                             )
     data_m  = mod.ddm(  data=data_p
                         )
     data_o = nl.dualosc2(data=data_m
-                                ,m=m
-                                ,obv=obv
                                 ,F=F
+                                ,m=m
+                                ,hrm=hrm
                                 )
     data_n = misc.normalizedf(data_o,'std')
-    plots.showplots(df1=data_n,caller='dump',F=F,obv=obv,refresh=refresh) 
-
-    print('- Dump Complete...')
+    plots.showplots(df1=data_n,m=m,caller='dump',asset=asset,F=F,obv=obv,refresh=refresh,hrm=hrm)  
     breakpoint()
+    print('- Dump Complete...')
     return data_n

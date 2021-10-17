@@ -4,7 +4,8 @@ from scipy import signal as sig
 from scipy.optimize import curve_fit
 # from scipy import stats
 import matplotlib.pyplot as plt
-# import cmath
+import frequencies as freq
+import cmath as cm
 # import misc
 
 # The dual oscillator attempts to model price action through
@@ -20,6 +21,7 @@ def dualosc2(data,F,hrm,m=1):
     ny = Fs/2
 
     data_o = data.copy()
+    data_o.fillna(0,inplace=True)
 
     x1 = data_o.x1.round(5).reset_index(drop=True)
     dotx1 = data_o.d1dotx1.round(5).reset_index(drop=True)
@@ -29,8 +31,8 @@ def dualosc2(data,F,hrm,m=1):
     dotx2 = data_o.d1dotx2.round(5).reset_index(drop=True)
     ddotx2 = data_o.d2dotx2.round(5).reset_index(drop=True)
 
-    lin,w1o,a1o = signal_nat(x1,9)
-    lin,w2o,a2o = signal_nat(x2,9)
+    lin,w1o,a1o = signal_nat(x1,8)
+    lin,w2o,a2o = signal_nat(x2,8)
 
     l1 = x1.shift(1)
     r1mag = np.sqrt((x1+l1)**2+x2**2)
@@ -42,27 +44,33 @@ def dualosc2(data,F,hrm,m=1):
     a2 = 1-(l2/r2mag) 
     xg2=np.zeros(len(data_o))
 
+    all = [1,2,4,8,16,32,64,128]
+
     fib = [1,2,3,5,8]
-    prim = [1,3,5,7]
+    prim = [1,3,5,7,11]
 
-    even = [2,4,6,8]
-    odd = [1,3,5,9]
+    fnd = [1]
 
-    high = [5,6,7,8,9]
-    mid = [3,4,5,6,7]
-    low = [1,2,3,4,5]
+    even = [2,4,6,8,10,12]
+    odd = [1,3,5,7,9,11]
 
-    all = [1,2,3,4,5,6,7,8,9]
+    high = [9,10,11,12]
+    mid = [5,6,7,8]
+    low = [1,2,3,4]
 
-    L = len(x1)//2
+    L = len(x1)//1
 
+
+    chd1 = np.multiply(all,w1o[0])
+    chd2 = np.multiply(all,w2o[0])
+ 
     for i in np.arange(len(w1o)):
         if i+1 in locals()[hrm]:
-            w10 = w1o[i]
-            w20 = w2o[i]
+            w10 = chd1[i]
+            w20 = chd2[i]
 
-            b1=-1*np.abs(a1o[i])*w10**-1
-            b2=-1*np.abs(a2o[i])*w20**-1
+            b1=-1*np.abs(a1o[i])*(w10**-1)
+            b2=-1*np.abs(a2o[i])*(w20**-1)
             p01 = [1,b1,w10]
             p02 = [1,b2,w20]
 
@@ -75,8 +83,8 @@ def dualosc2(data,F,hrm,m=1):
     xp1 = x1-xg1
     xp2 = x2-xg2
 
-    k1 = m*w10**2
-    k2 = m*w20**2
+    k1 = m*w1o[0]**2
+    k2 = m*w2o[0]**2
 
     ma1 = -(xg1 + l1)*a1*k1 - xg1*a2*k2
     ma2 = -(xg2 + l2)*a2*k2 - xg2*a1*k1
@@ -84,17 +92,22 @@ def dualosc2(data,F,hrm,m=1):
     dr1 = (a1*k1)/(2*np.sqrt(np.abs(m*k1)))
     dr2 = (a2*k2)/(2*np.sqrt(np.abs(m*k2)))
 
-    w1 = w10*np.sqrt(np.abs(1-(2*(dr1**2))))
-    w2 = w20*np.sqrt(np.abs(1-(2*(dr2**2))))
+    w1 = w1o[0]*np.sqrt(np.abs(1-(2*(dr1**2))))
+    w2 = w2o[0]*np.sqrt(np.abs(1-(2*(dr2**2))))
 
-    rf1 = w10/w1
-    rf2 = w20/w2
+    qw1 = (w1.quantile(0.75)-w1.quantile(0.25))/w1o[0]
+    qw2 = (w2.quantile(0.75)-w2.quantile(0.25))/w2o[0]
+
+    qw = np.array([qw1,qw2])
+
+    rf1 = (np.angle(freq.complex_coords(xg1))-np.angle(freq.complex_coords(xp1)))/(np.angle(freq.complex_coords(xg1))+np.angle(freq.complex_coords(xp1)))
+    rf2 = (np.angle(freq.complex_coords(xg2))-np.angle(freq.complex_coords(xp2)))/(np.angle(freq.complex_coords(xg2))+np.angle(freq.complex_coords(xp2)))
 
     q1 = (2*dr1)**-1
     q2 = (2*dr2)**-1
 
-    lmda1 = dr1 *w10
-    lmda2 = dr2 *w20
+    zeta1 = dr1 *w1o[0]
+    zeta2 = dr2 *w2o[0]
 
     del1 = r1mag - l1
     del2 = r2mag - l2
@@ -106,14 +119,14 @@ def dualosc2(data,F,hrm,m=1):
     ff2 = ft2 - ma2
 
     pe1 = (del1**2)*k1*0.5
-    ke1 = 0.5*m*(dotx1**2+dotx2**2)
-    te1 = ke1-pe1
-    tes1 = ke1+pe1
+    ke1 = 0.5*m*(dotx1**2)
+    te1 = ke1+pe1
+    ed1 = ke1-pe1
 
     pe2 = (del2**2)*k2*0.5
-    ke2 = 0.5*m*(dotx1**2+dotx2**2)
-    te2 = ke2-pe2
-    tes2 = ke2+pe2
+    ke2 = 0.5*m*(dotx2**2)
+    te2 = ke2+pe2
+    ed2 = ke2-pe2
 
     wrk1 = ma1*r1mag
     wrk2 = ma2*r2mag
@@ -121,29 +134,38 @@ def dualosc2(data,F,hrm,m=1):
     pwr1 = wrk1 - wrk1.shift()
     pwr2 = wrk2 - wrk2.shift()
 
-    psr1 = xp1/x1
-    psr2 = xp2/x2
+    thd1 = np.sqrt(x1**2-xg1**2)/xg1
+    thd2 = np.sqrt(x2**2-xg2**2)/xg2
+
+    spd = np.angle(freq.complex_coords(x1)) - np.angle(freq.complex_coords(x2)) 
 
     # TOTAL SYSTEM FORMS
-    Pxm = np.sqrt(x1**2+x2**2)
-    Pxa = np.arctan2(x2,x1)
-
     Mam = np.sqrt(ma1**2+ma2**2)
     Maa = np.arctan2(ma2,ma1) 
+    Mat = Mam*np.sin(np.arange(len(x1))+Maa)
 
     Ftm = np.sqrt(ft1**2+ft2**2)
     Fta = np.arctan2(ft2,ft1) 
-
+    Ftt = Ftm*np.sin(np.arange(len(x1))+Fta)
+ 
     Ffm = np.sqrt(ff1**2+ff2**2)
     Ffa = np.arctan2(ff2,ff1) 
+    Fft = Ffm*np.sin(np.arange(len(x1))+Ffa)
 
     Pwm = np.sqrt(pwr1**2+pwr2**2)
     Pwa = np.arctan2(pwr2,pwr1) 
+    Pwt = Pwm*np.sin(np.arange(len(x1))+Pwa)
 
     Wkm = np.sqrt(wrk1**2+wrk2**2)
     Wka = np.arctan2(wrk2,wrk1) 
+    Wkt = Wkm*np.sin(np.arange(len(x1))+Wka)
 
-    Sen = (te1-te2)/(te1+te2)
+    Pe = pe1+pe2
+    Ke = ke1+ke2
+    He = Pe+Ke
+    Le = Ke-Pe
+
+    Thd = thd1+thd2    
 
     # Torque
     r=[[r1mag[i],r2mag[i]] for i in range(len(x1))]
@@ -151,13 +173,16 @@ def dualosc2(data,F,hrm,m=1):
 
     Trq = np.cross(r,f)
 
-    sys = pd.DataFrame({'Sen':Sen,'Pxm':Pxm,'Pxa':Pxa,'Mam':Mam,'Maa':Maa,'Ftm':Ftm,'Fta':Fta,'Ffm':Ffm,'Ffa':Ffa,'Pwm':Pwm,'Pwa':Pwa,'Wkm':Wkm,'Wka':Wka,'Trq':Trq})
+    sys = pd.DataFrame({'Pe':Pe,'Ke':Ke,'He':He,'Le':Le,'Mam':Mam,'Maa':Maa,'Mat':Mat,'Ftm':Ftm,'Fta':Fta,'Ftt':Ftt,'Ffm':Ffm,'Ffa':Ffa,'Fft':Fft
+                        ,'Pwm':Pwm,'Pwa':Pwa,'Pwt':Pwt,'Wkm':Wkm,'Wka':Wka,'Wkt':Wkt,'Trq':Trq,'Thd':Thd,'Spd':spd})
 
-    x1sln = pd.DataFrame({'x1':x1,'dotx1':dotx1,'ddotx1':ddotx1,'xg1':xg1,'xp1':xp1,'ma1':ma1,'ft1':ft1,'ff1':ff1,'te1':te1
-                        ,'pe1':pe1,'ke1':ke1,'wrk1':wrk1,'pwr1':pwr1,'w1o':w1o[0],'w1':w1,'a1':a1,'k1':k1,'dr1':dr1,'lmda1':lmda1,'q1':q1,'rf1':rf1,'psr1':psr1})
-                        
-    x2sln = pd.DataFrame({'x2':x2,'dotx2':dotx2,'ddotx2':ddotx2,'xg2':xg2,'xp2':xp2,'ma2':ma2,'ft2':ft2,'ff2':ff2,'te2':te2
-                            ,'pe2':pe2,'ke2':ke2,'wrk2':wrk2,'pwr2':pwr2,'w2o':w2o[0],'w2':w2,'a2':a2,'k2':k2,'dr2':dr2,'lmda2':lmda2,'q2':q2,'rf2':rf2,'psr2':psr2})
+    x1sln = pd.DataFrame({'x1':x1,'dotx1':dotx1,'ddotx1':ddotx1,'xg1':xg1,'xp1':xp1,'ma1':ma1,'ft1':ft1,'ff1':ff1,'te1':te1,'ed1':ed1
+                        ,'pe1':pe1,'ke1':ke1,'wrk1':wrk1,'pwr1':pwr1,'w1o':w1o[0],'w1':w1,'a1':a1,'k1':k1,'dr1':dr1,'zeta1':zeta1,'q1':q1,'rf1':rf1
+                        ,'thd1':thd1})
+                 
+    x2sln = pd.DataFrame({'x2':x2,'dotx2':dotx2,'ddotx2':ddotx2,'xg2':xg2,'xp2':xp2,'ma2':ma2,'ft2':ft2,'ff2':ff2,'te2':te2,'ed2':ed2
+                        ,'pe2':pe2,'ke2':ke2,'wrk2':wrk2,'pwr2':pwr2,'w2o':w2o[0],'w2':w2,'a2':a2,'k2':k2,'dr2':dr2,'zeta2':zeta2,'q2':q2,'rf2':rf2
+                        ,'thd2':thd2})
 
     x1sln = x1sln.fillna(0)
     x2sln = x2sln.fillna(0)
@@ -170,24 +195,19 @@ def dualosc2(data,F,hrm,m=1):
 
     sln = x1sln.join(x2sln).join(sys)
 
-    pos = pd.DataFrame()
+    x1slnp = x1sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
+    x2slnp = x2sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
+    slnp = sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
 
-    pos['pos'] = np.where(ddotx2>0,1,np.where(ddotx2<0,-1,0))
-
-    x1slnp = x1sln.join(pos.pos).fillna(0)
-    x2slnp = x2sln.join(pos.pos).fillna(0)
-    slnp = sln.join(pos.pos).fillna(0)
-
-    return slnp
-
+    return slnp, qw
 
 def signal_nat(x,bins=3):
     x1fft = np.fft.fft(x)
     x1frq = np.fft.fftshift(np.fft.fftfreq(len(x),1/(bins*2)))
     wo = [] ;ao=[]
-    
+
     mask = x1frq >= 0
-    
+
     for i in np.arange(0,bins):
         maskb = (x1frq > i) & (x1frq<=(i+1))
         try:
@@ -201,7 +221,7 @@ def signal_nat(x,bins=3):
     lin = np.fft.ifft(flt1)
 
     return lin, [x*2*np.pi for x in wo], ao
-    
+
 def fseries(x,a0,a1,b1,w):
     f = a0+a1*np.cos(w*x)+b1*np.sin(w*x)
     return f

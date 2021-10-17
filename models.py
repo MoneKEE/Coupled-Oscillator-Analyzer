@@ -3,38 +3,26 @@ import pandas as pd
 from scipy import stats
 
 def ddm(data,tgt=0.8):
-    x1 = f'x1'
-    x2 = f'x2'
-    dotx2 = f'd1dotx2'
+    x1 = data.x1
+    x2 = data.x2
+
+    dotx1 = data.d1dotx1
+    dotx2 = data.d1dotx2
     
     data_m = data.copy()
 
     print('- Creating addtional features...\n')
     
-    data_m['x1pol'] = np.where(data_m[x1]>0,1,np.where(data_m[x1]<0,-1,0))
-    data_m['x2pol'] = np.where(data_m[x2]>0,1,np.where(data_m[x2]<0,-1,0))
+    data_m['x1pol'] = np.where(x1>0,1,np.where(x1<0,-1,0))
+    data_m['x2pol'] = np.where(x2>0,1,np.where(x2<0,-1,0))
 
-    data_m['quad_abs'] = np.where((data_m[x2]>0) & (data_m[x1]>0),1,np.where((data_m[x2]>0) & (data_m[x1]<0),2,np.where((data_m[x2]<0) & (data_m[x1]>0),3,4)))
-    data_m['pos'] = np.where(data_m.d1dotx2>0,1,np.where(data_m.d1dotx2<0,-1,0))
-    
-    # data_m[f'{x1}_avg_cum'] = data[x1].expanding().mean()
-    # data_m[f'{x2}_avg_cum'] = data[x2].expanding().mean()
-
-    # data_m[f'{x1}_med_cum'] = data[x1].expanding().median()
-    # data_m[f'{x2}_med_cum'] = data[x2].expanding().median()
-
-    # data_m[f'{x1}_var_cum'] = data[x1].expanding().var()
-    # data_m[f'{x2}_var_cum'] = data[x2].expanding().var()
-
-    # data_m[f'{x1}_min_cum'] = data[x1].expanding().min()
-    # data_m[f'{x2}_min_cum'] = data[x2].expanding().min()
-    
-    # data_m[f'{x1}_max_cum'] = data[x1].expanding().max()
-    # data_m[f'{x2}_max_cum'] = data[x2].expanding().max()
+    data_m['quad_abs'] = np.where((x2>0) & (x1>0),1,np.where((x2>0) & (x1<0),2,np.where((x2<0) & (x1>0),3,4)))
+    data_m['pos'] = np.where(dotx2>0,1,0)
 
     print('Data modelling complete...\n')
 
     data_m.fillna(0,inplace=True)
+
     return data_m
 
 def point_sys(data,obv=['v','c'],size=3,dt=1):

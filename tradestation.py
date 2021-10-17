@@ -19,17 +19,17 @@ warnings.filterwarnings('ignore')
 
 def main(argv):
     # PARAMETERS
-    harms       = 9
+    hrm       = 'fnd'
     alpha       = 1
-    N           = 7
+    N           = 2
     F          = 2
     diff_offset = 1
     diff        = 1
     m           = 1
     refresh     = 0.04
-    start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
+    start       = dt(2021,1,1,0,0,0); stop = dt(2021,1,10,00,00,00)
     asset       = 'ETH-USD'
-    interval    = '15minutes'
+    interval    = '1minute'
     mode        = 'stream_r'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
@@ -49,14 +49,14 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:r:c:',['mode=','from=','thru=','interval=','fs=','mass=','win=','ref=','chord='])
+        opts,args = getopt.getopt(argv,'hm:a:f:t:i:s:w:n:r:c:',['asset=','mode=','from=','thru=','interval=','fs=','mass=','win=','ref=','chord='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
+        print('tradestation.py -m <mode> -a <asset> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
+            print('tradestation.py -m <mode> -a <asset> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
@@ -77,6 +77,8 @@ def main(argv):
             refresh = float(arg)
         elif opt in ('-c', 'chord'):
             hrm = arg
+        elif opt in ('-a', 'asset'):
+            asset = arg
 
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
@@ -97,7 +99,6 @@ def main(argv):
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
-                            ,harms=harms
                             ,F=F
                             ,refresh=refresh
                             ,hrm=hrm
@@ -110,7 +111,7 @@ def main(argv):
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
-                            ,harms=harms
+                            ,asset=asset
                             ,F=F
                             ,refresh=refresh
                             ,hrm=hrm
@@ -128,6 +129,8 @@ def main(argv):
                             ,hrm=hrm
                             ,m=m
                             ,obv=obv
+                            ,mode=mode
+                            ,asset=asset
                             )
 
 if __name__ == '__main__':

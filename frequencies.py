@@ -2,13 +2,10 @@ import numpy as np
 from scipy.signal import periodogram as pe
 
 
-def complex_coords(df,x):
-    dfc = df.copy()
-    for s,i in enumerate(x,start=1):
-        dfc[f'x{s}fft'] = np.fft.fft(i)
-        dfc[f'x{s}ifft'] = np.fft.ifft(dfc[f'x{s}fft'])
 
-    return dfc
+def complex_coords(x):
+    
+    return np.fft.fft(x)
 
 
 def get_tfreq(data,col,Fs):

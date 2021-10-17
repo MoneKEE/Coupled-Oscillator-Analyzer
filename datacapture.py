@@ -7,7 +7,7 @@ def get_data_span(asset,start,stop,interval,mode):
 
     pc      = cbpro.PublicClient()
     data    = pd.DataFrame()
-
+    
     intervals = {'1day':86400,
                 '6hours':21600,
                 '1hour':3600,
