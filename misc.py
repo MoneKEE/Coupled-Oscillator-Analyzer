@@ -1,4 +1,4 @@
-import progressbar
+# import progressbar
 import numpy as np
 import pandas as pd
 # from sklearn import preprocessing
@@ -9,17 +9,17 @@ def iseven(num):
     else:
         return 0
 
-def progress_bar(x,load_text):
+# def progress_bar(x,load_text):
       
-    widgets = [f'{load_text}: ', progressbar.AnimatedMarker(),' [',
-         progressbar.Timer(),
-         '] ',
-           progressbar.Bar('*'),' (',
-           progressbar.ETA(), ') ',
-          ]
-    bar = progressbar.ProgressBar(widgets=widgets,maxval=x).start()
+#     widgets = [f'{load_text}: ', progressbar.AnimatedMarker(),' [',
+#          progressbar.Timer(),
+#          '] ',
+#            progressbar.Bar('*'),' (',
+#            progressbar.ETA(), ') ',
+#           ]
+#     bar = progressbar.ProgressBar(widgets=widgets,maxval=x).start()
       
-    return bar
+#     return bar
 
 def normalizedf(data,rtype='plot'):
     print('\t- Normalizing data...\n')
