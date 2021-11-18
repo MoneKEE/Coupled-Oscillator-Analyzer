@@ -5,15 +5,14 @@ import pandas as pd
 import frequencies as freq
 import nonlinear as nl
 import plots
-# import matplotlib.pyplot as plt
 from datetime import datetime as dt
-import datacapture as dc
-import models as mod
-import misc
+from datetime import timedelta as de
+import modes
 import warnings
-import stats as st
-import mlmod
 import numpy as np
+import ccxt
+import config
+import time 
 
 pd.plotting.register_matplotlib_converters()
 
@@ -22,43 +21,29 @@ def warn(*args,**kwargs):
 
 warnings.warn=warn
 
-def testbed(asset='ETH-USD',start=dt(2020,9,1),stop=dt(2020,9,10),hrm='fnd',interval='1minute',F=368896,mode='dump',obv=['c','v'],m=1,refresh=0.5):
-    
-    df_master   = dc.get_data_span( asset=asset
-                                ,start=start
-                                ,stop=stop
-                                ,interval=interval
-                                ,mode=mode
-                                ) 
-    data_p = mod.point_sys(df_master,size=3)
-    data_d = mod.ddm(   data=data_p
-                        )
-    data_o,qw = nl.dualosc2(data=data_d
-                            ,F=F
-                            ,m=m
-                            ,hrm=hrm
-                            )
-    
-    data_n = misc.normalizedf(data_o,'plot')
-    # data_n = misc.normalizedf(data_o,None)
-    # data_p = st.proba(data_n)
+def testbed(asset='BTC-USD',start=dt(2021,10,10),stop=dt.now().replace(second=0,microsecond=0)-de(seconds=3600),hrm='even',interval='1minute',F=368896,mode='dump',obv=['c','v'],m=1):
 
-    endog = data_n.loc[:,'Pe':'Spd']
-    exog  = data_n.pos
+    asset = 'ETH-USD'
+    hrm='even'
+    interval='1minute'
+    F=368896
+    mode='dump'
+    obv=['v','c']
+    m=1
 
-    clf = mlmod.MLP(endog[:-1],exog[:-1],asset='ETH-USD')
-    
-    ypred = clf.predict(endog)
+    df  = pd.read_csv('test_data.csv')
+    df.dt=pd.to_datetime(df.dt,format='%Y-%m-%d %H:%M:%S')
+    df.set_index('dt',drop=True,inplace=True)
 
-    data_n['post'] = np.zeros(len(endog))
-    data_n.post = ypred
+    idx=df.index[0]+de(days=30*1)
 
-    plots.showplots(data_n,F=F,obv=obv,m=m,hrm=hrm,qw=qw)
+    data = modes.dump(data=df.loc[:idx],asset='ETH-USD',hrm='even',m=1,F=368896)
 
     breakpoint()
 
     print('- Dump Complete...')
-    return data_n
+    return data
+
 
 if __name__ == '__main__':
     testbed() 

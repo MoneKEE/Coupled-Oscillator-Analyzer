@@ -1,7 +1,15 @@
 import pandas as pd
 import cbpro
+import ccxt
 import math as mt
 from datetime import timedelta
+
+def get_ccxt_data(asset,stop,interval):
+    exch = ccxt.binance()
+
+    # terms = mt.ceil(timedelta(/500)
+
+
 
 def get_data_span(asset,start,stop,interval,mode):
 
@@ -14,8 +22,6 @@ def get_data_span(asset,start,stop,interval,mode):
                 '15minutes':900,
                 '5minutes':300,
                 '1minute':60}
-
-    print(f'\nStarting {mode} run for date range {start} - {stop} @interval={interval}\n')
 
     diff = stop - start
     d_s = diff.total_seconds()
@@ -49,7 +55,7 @@ def get_data_span(asset,start,stop,interval,mode):
 
         data = data.append(raw_data)
 
-    columnlist = {0:'t',1:'l',2:'h',3:'o',4:'c',5:'v'}
+    columnlist = {0:'t',1:'o',2:'h',3:'l',4:'c',5:'v'}
     data.rename(columns = columnlist,inplace=True)
 
     data['dt'] = pd.to_datetime(data['t'],unit='s')
@@ -59,8 +65,7 @@ def get_data_span(asset,start,stop,interval,mode):
 
     data['v']    = data['v'].round(3)
     data         = data.iloc[:data.index.get_loc(stop),:]
+
+    data.drop_duplicates().to_csv('test_data.csv')
     
-    # data = data.round(decimals=3)
-    
-    print(f'\nData acquired. Total data points:{data.shape[0]}')
     return data.drop_duplicates()

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import dates
 
-def showplots(df1,obv,F,m,hrm,qw,refresh=0.5,caller='dump',asset='ETH-USD'):
+def showplots(df1,F,m,hrm,qw,refresh=0.5,caller='dump',asset='ETH-USD'):
     pd.plotting.register_matplotlib_converters()
 
     with plt.style.context(style='dark_background'):
@@ -25,7 +25,7 @@ def showplots(df1,obv,F,m,hrm,qw,refresh=0.5,caller='dump',asset='ETH-USD'):
         dw = 2*np.pi*df
         ny = Fs/2
 
-        wndtr = len(df1)//32
+        wndtr = len(df1)//512
 
         ttl = f'Analysis Dashboard - Asset:{asset} |hrm={hrm} |N={len(df1)} |wnd={wndtr} |T={round(T,3)} |Fs={round(Fs,3)} |F={round(df,3)} |W={round(dw,3)} |Fn={round(ny,3)} |m={m}'
 
@@ -136,33 +136,18 @@ def showplots(df1,obv,F,m,hrm,qw,refresh=0.5,caller='dump',asset='ETH-USD'):
         ax11.legend(loc='lower left')
 
         #SECTION 5: 3d PLOTS
-        # ax12 = plt.subplot2grid((gx,gy),(2*(s1x+s1rs+1)+1,(s1y+s1cs+1)*2),rowspan=s5rs,colspan=s1cs,projection='polar')
-        # ax12.plot(df1.Fta,df1.Ftm,label='Fx',marker='o',markersize=6,linestyle='none')
-        # ax12.plot(df1.Ffa,df1.Ffm,label='Ffx',marker='o',markersize=6,linestyle='none')
-        
-        # ax12.plot(df1.Pwa,df1.Pwm,label='Pwx',marker='o',markersize=6,linestyle='none')
-        # ax12.plot(df1.Maa,df1.Mam,label='Max',marker='o',markersize=6,linestyle='none')
-        # ax12.plot(df1.Wka,df1.Wkm,label='Wkx',marker='o',markersize=6,linestyle='none')
-
-        # ax12.annotate('Fx',xy=(df1.Fta.iloc[-1],df1.Ftm.iloc[-1]),xytext=(df1.Fta.iloc[-1],df1.Ftm.iloc[-1]),xycoords='data',textcoords='data',fontweight='bold')
-        # ax12.annotate('Max',xy=(df1.Maa.iloc[-1],df1.Mam.iloc[-1]),xytext=(df1.Maa.iloc[-1],df1.Mam.iloc[-1]),xycoords='data',textcoords='data',fontweight='bold')
-        # ax12.annotate('Ffx',xy=(df1.Fta.iloc[-1],df1.Ftm.iloc[-1]),xytext=(df1.Fta.iloc[-1],df1.Ftm.iloc[-1]),xycoords='data',textcoords='data',fontweight='bold')
-        # ax12.annotate('Pwx',xy=(df1.Pwa.iloc[-1],df1.Pwm.iloc[-1]),xytext=(df1.Pwa.iloc[-1],df1.Pwm.iloc[-1]),xycoords='data',textcoords='data',fontweight='bold')
-        # ax12.annotate('Wkx',xy=(df1.Wka.iloc[-1],df1.Wkm.iloc[-1]),xytext=(df1.Wka.iloc[-1],df1.Wkm.iloc[-1]),xycoords='data',textcoords='data',fontweight='bold')
-        # ax12.set_rscale('symlog')
-        # ax12.legend(loc='upper left')
-
         ax12 = plt.subplot2grid((gx,gy),(2*(s1x+s1rs+1)+1,(s1y+s1cs+1)*2),rowspan=s5rs,colspan=s1cs,projection='3d')
         ax12.plot(np.arange(len(x1))[-wndtr:],x1[-wndtr:],x2[-wndtr:],label='Px',linestyle='dotted',marker='o')
-        # ax12.plot(np.arange(len(df1))[-wndtr:],df1.ft1[-wndtr:],df1.ft2[-wndtr:],label='Ft',linestyle='dotted',marker='o')
-        # ax12.plot(np.arange(len(df1))[-wndtr:],df1.ff1[-wndtr:],df1.ff2[-wndtr:],label='Ff',linestyle='dotted',marker='o')
-
         ax12.plot(len(x1)-1,x1.iloc[-1],x2.iloc[-1],label='Px',linestyle='dotted',marker='o')
+        ax12.text2D(0.05,0.95,f'ret orc:{df1.orc.sum().round(2)}\nret str:{df1.str.sum().round(2)}\nret bnh:{df1.bnh.sum().round(2)}',transform=ax12.transAxes)
+        # ax12.plot(len(x1)-1,x1.iloc[-1],0,label='x1',linestyle='dotted',marker='o')
+        # ax12.plot(len(x1)-1,0,x2.iloc[-1],label='x2',linestyle='dotted',marker='o')
+        
         # ax12.plot(len(x1)-1,df1.ft1.iloc[-1],df1.ft2.iloc[-1],label='Ft',linestyle='dotted',marker='o')
         # ax12.plot(len(x1)-1,df1.ff1.iloc[-1],df1.ff2.iloc[-1],label='Ff',linestyle='dotted',marker='o')
 
         plt.subplots_adjust(top=0.92, bottom=0.08, left=0.1, right=0.95, hspace=0.25, wspace=0.25)
-        plt.figure(1).suptitle((f'x1| w1n:{df1.w1o[0].round(3)} |w1:{df1.w1.iloc[-1].round(3)} |qw1:{qw[0].round(3)} |dr1:{df1.dr1.iloc[-1].round(3)} |q1:{df1.q1.iloc[-1].round(3)} |thd1:{df1.thd1.iloc[-1].round(3)} |zeta1:{df1.zeta1.iloc[-1].round(3)} |rf1:{df1.rf1.iloc[-1].round(3)}  x2| w2n:{df1.w2o.iloc[-1].round(3)} |w2:{df1.w2.iloc[-1].round(3)} |qw2:{qw[1].round(3)} |dr2:{df1.dr2.iloc[-1].round(3)} |q2:{df1.q2.iloc[-1].round(3)} |thd2:{df1.thd2.iloc[-1].round(3)} |zeta2:{df1.zeta2.iloc[-1].round(3)} |rf2:{df1.rf2.iloc[-1].round(3)}'))
+        plt.figure(1).suptitle((f'x1| w1n:{df1.w1o[0].round(3)} |w1:{df1.w1.iloc[-1].round(3)} |qw1:{qw[0].round(3)} |dr1:{df1.dr1.iloc[-1].round(3)} |q1:{df1.q1.iloc[-1].round(3)} |thd1:{df1.thd1.iloc[-1].round(3)} |zeta1:{df1.zeta1.iloc[-1].round(3)} |rf1:{df1.rf1.iloc[-1].round(3)} \n  x2| w2n:{df1.w2o.iloc[-1].round(3)} |w2:{df1.w2.iloc[-1].round(3)} |qw2:{qw[1].round(3)} |dr2:{df1.dr2.iloc[-1].round(3)} |q2:{df1.q2.iloc[-1].round(3)} |thd2:{df1.thd2.iloc[-1].round(3)} |zeta2:{df1.zeta2.iloc[-1].round(3)} |rf2:{df1.rf2.iloc[-1].round(3)}'))
         
         if caller == 'dump':
             plt.show()

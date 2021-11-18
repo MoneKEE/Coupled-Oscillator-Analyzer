@@ -30,7 +30,7 @@ def main(argv):
     start       = dt(2021,1,1,0,0,0); stop = dt(2021,1,10,00,00,00)
     asset       = 'ETH-USD'
     interval    = '1minute'
-    mode        = 'stream_r'
+    mode        = 'dump'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
                     ,'dv2t_oo','dc2t_oo'
@@ -122,14 +122,10 @@ def main(argv):
     # Run dump
     else:
         dd = modes.dump( data=df_master
-                            ,diff_offset=diff_offset
-                            ,diff=diff
                             ,F=F
-                            ,refresh=refresh
                             ,hrm=hrm
                             ,m=m
                             ,obv=obv
-                            ,mode=mode
                             ,asset=asset
                             )
 

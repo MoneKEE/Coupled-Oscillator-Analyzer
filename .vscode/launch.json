@@ -22,7 +22,14 @@
             "name": "Python: Test",
             "type": "python",
             "request": "launch",
-            "program": "c:\\Users\\mwill\\Coupled-Oscillator-Analyzer\\Test.py",
+            "program": "c:\\Users\\mwill\\Coupled-Oscillator-Analyzer\\test.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: BT Trade",
+            "type": "python",
+            "request": "launch",
+            "program": "c:\\Users\\mwill\\Coupled-Oscillator-Analyzer\\bt_trade.py",
             "console": "integratedTerminal"
         }
     ]

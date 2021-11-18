@@ -2,16 +2,15 @@ import pandas as pd
 import numpy as np
 from scipy import signal as sig
 from scipy.optimize import curve_fit
-# from scipy import stats
 import matplotlib.pyplot as plt
 import frequencies as freq
 import cmath as cm
-# import misc
 
 # The dual oscillator attempts to model price action through
 # the motion of a two axis simple oscillator. It accepts
 # two parameters X1 and X2 
 def dualosc2(data,F,hrm,m=1):
+    print('\t- Starting nonlinear processing...\n')
     N = len(data)
     Fs = F
     sr = 1/Fs
@@ -23,13 +22,17 @@ def dualosc2(data,F,hrm,m=1):
     data_o = data.copy()
     data_o.fillna(0,inplace=True)
 
-    x1 = data_o.x1.round(5).reset_index(drop=True)
-    dotx1 = data_o.d1dotx1.round(5).reset_index(drop=True)
-    ddotx1 = data_o.d2dotx1.round(5).reset_index(drop=True)
+    v = data_o.v.reset_index(drop=True)
+    c = data_o.c.reset_index(drop=True)
 
+    x1 = data_o.x1.round(5).reset_index(drop=True)
     x2 = data_o.x2.round(5).reset_index(drop=True)
-    dotx2 = data_o.d1dotx2.round(5).reset_index(drop=True)
-    ddotx2 = data_o.d2dotx2.round(5).reset_index(drop=True)
+  
+    dotx1 = data_o.dotx1.round(5).reset_index(drop=True)
+    dotx2 = data_o.dotx2.round(5).reset_index(drop=True)
+
+    ddotx1 = data_o.ddotx1.round(5).reset_index(drop=True)
+    ddotx2 = data_o.ddotx2.round(5).reset_index(drop=True)
 
     lin,w1o,a1o = signal_nat(x1,8)
     lin,w2o,a2o = signal_nat(x2,8)
@@ -47,16 +50,12 @@ def dualosc2(data,F,hrm,m=1):
     all = [1,2,4,8,16,32,64,128]
 
     fib = [1,2,3,5,8]
-    prim = [1,3,5,7,11]
+    prim = [1,3,5,7]
 
     fnd = [1]
 
-    even = [2,4,6,8,10,12]
-    odd = [1,3,5,7,9,11]
-
-    high = [9,10,11,12]
-    mid = [5,6,7,8]
-    low = [1,2,3,4]
+    even = [2,4,6,8]
+    # odd = [1,3,5,7]
 
     L = len(x1)//1
 
@@ -167,14 +166,10 @@ def dualosc2(data,F,hrm,m=1):
 
     Thd = thd1+thd2    
 
-    # Torque
-    r=[[r1mag[i],r2mag[i]] for i in range(len(x1))]
-    f=[[ft1[i],ft2[i]] for i in range(len(x1))]
-
-    Trq = np.cross(r,f)
+    fnd = pd.DataFrame({'o':data_o.o,'h':data_o.h,'l':data_o.l,'c':data_o.c,'v':data_o.v,'pctchg':data_o.pctchg,'logret':data_o.logret})
 
     sys = pd.DataFrame({'Pe':Pe,'Ke':Ke,'He':He,'Le':Le,'Mam':Mam,'Maa':Maa,'Mat':Mat,'Ftm':Ftm,'Fta':Fta,'Ftt':Ftt,'Ffm':Ffm,'Ffa':Ffa,'Fft':Fft
-                        ,'Pwm':Pwm,'Pwa':Pwa,'Pwt':Pwt,'Wkm':Wkm,'Wka':Wka,'Wkt':Wkt,'Trq':Trq,'Thd':Thd,'Spd':spd})
+                        ,'Pwm':Pwm,'Pwa':Pwa,'Pwt':Pwt,'Wkm':Wkm,'Wka':Wka,'Wkt':Wkt,'Thd':Thd,'Spd':spd})
 
     x1sln = pd.DataFrame({'x1':x1,'dotx1':dotx1,'ddotx1':ddotx1,'xg1':xg1,'xp1':xp1,'ma1':ma1,'ft1':ft1,'ff1':ff1,'te1':te1,'ed1':ed1
                         ,'pe1':pe1,'ke1':ke1,'wrk1':wrk1,'pwr1':pwr1,'w1o':w1o[0],'w1':w1,'a1':a1,'k1':k1,'dr1':dr1,'zeta1':zeta1,'q1':q1,'rf1':rf1
@@ -193,11 +188,9 @@ def dualosc2(data,F,hrm,m=1):
     x2sln = x2sln.apply(lambda x: x.replace(np.inf, x.quantile(.99)))
     x2sln = x2sln.apply(lambda x: x.replace(-np.inf, x.quantile(.01)))
 
-    sln = x1sln.join(x2sln).join(sys)
+    sln = fnd.join(x1sln,lsuffix='_caller',rsuffix='_other').join(x2sln,lsuffix='_caller',rsuffix='_other').join(sys,lsuffix='_caller',rsuffix='_other')
 
-    x1slnp = x1sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
-    x2slnp = x2sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
-    slnp = sln.join(data_o[['pos']].reset_index(drop=True)).fillna(0)
+    slnp = sln.fillna(0)
 
     return slnp, qw
 

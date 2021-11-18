@@ -22,6 +22,7 @@ def progress_bar(x,load_text):
     return bar
 
 def normalizedf(data,rtype='plot'):
+    print('\t- Normalizing data...\n')
     datac = data.copy()
 
     #Normalize the values
@@ -29,14 +30,14 @@ def normalizedf(data,rtype='plot'):
         # datac[col] = datac[col].replace([np.inf, -np.inf], np.nan)
         # datac[col] = datac[col].fillna(np.abs(datac[col]).max())
         if rtype == 'plot':
-            if col not in ['quad_abs','x1pol','x2pol','w1o','w1','w2o','w2','pos','posa','Pxa','Pwa','Maa','Fta','Ffa']:
+            if col not in ['quad_abs','x1pol','x2pol','w1o','w1','w2o','w2','pos','ddpos','dpos','Pxa','Pwa','Maa','Fta','Ffa']:
                 datac[col] = datac[col]/np.max(np.abs(datac[col]))
         else:
-            datac[col] = datac[col]/np.max(np.abs(datac[col]))
-
+            if col not in ['str','orc','bnh']:
+                datac[col] = datac[col]/np.max(np.abs(datac[col]))
     return datac
 
 def get_roots(inp):
     dcply = np.polynomial.Polynomial.fit(np.arange(0,len(inp)),inp.values,deg=2)
-
+    
     return dcply
