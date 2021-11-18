@@ -32,24 +32,24 @@ def point_sys(data,obv=['v','c'],size=3,dt=1):
 
                 if i > 1:
                     diff = diff1 - diff1.shift(1)
-                    -diff = diff1.shift(-1) - diff1
+                    ndiff = diff1.shift(-1) - diff1
                     data_p[f'dotx{k}'] = diff.divide(dt*1)
-                    data_p[f'-dotx{k}'] = -diff.divide(dt*1)
+                    data_p[f'-dotx{k}'] = ndiff.divide(dt*1)
                 if i > 2:
                     diff = diff1 - diff1.shift(2)
-                    -diff = diff1.shift(-2) - diff1
+                    ndiff = diff1.shift(-2) - diff1
                     data_p[f'ddotx{k}'] = diff.divide(dt*2)
-                    data_p[f'-ddotx{k}'] = -diff.divide(dt*2)
+                    data_p[f'-ddotx{k}'] = ndiff.divide(dt*2)
                 if i > 3:
                     diff = diff1 - diff1.shift(3)
-                    -diff = diff1.shift(-3) - diff1
+                    ndiff = diff1.shift(-3) - diff1
                     data_p[f'd3dotx{k}'] = diff.divide(dt*3)
-                    data_p[f'-d3dotx{k}'] = -diff.divide(dt*3)
+                    data_p[f'-d3dotx{k}'] = ndiff.divide(dt*3)
                 if i > 4:
                     diff = diff1 - diff1.shift(4)
-                    -diff = diff1.shift(-4) - diff1
+                    ndiff = diff1.shift(-4) - diff1
                     data_p[f'd4dotx{k}'] = diff.divide(dt*4)
-                    data_p[f'-d4dotx{k}'] = -diff.divide(dt*4)
+                    data_p[f'-d4dotx{k}'] = ndiff.divide(dt*4)
 
                 # if i > 1:
                 #     diff2 = diff1-diff1.shift(1)
