@@ -1,17 +1,8 @@
 import progressbar
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
-from sklearn.metrics import mean_squared_error
+# from sklearn import preprocessing
 
-def get_mean_squared_error(data,comp,col):
-
-    h_list = ['ifft_'+str(x) for x in comp]
-    ifft_sum = data[h_list].sum(axis=1)
-    signal = data[col]
-    val = mean_squared_error(signal,ifft_sum)
-
-    return val
 def iseven(num):
     if (int(num) % 2) == 0:
         return 1
@@ -30,14 +21,22 @@ def progress_bar(x,load_text):
       
     return bar
 
-def normalizedf(data):
-    #Normalize the values
-    for col in data.columns:
-        data[col] = data[col]/np.max(np.abs(data[col]))
-        data[col] = round(data[col],3)
-    return data
+def normalizedf(data,rtype='max'):
+    datac = data.copy()
 
-def serial_todt(x,format='%y/%m/%d %H'):
-    for i in range(len(x)):
-        x[i] = pd.to_datetime(x[i],format)
-    return x
+    #Normalize the values
+    for col in datac.columns:
+        if col not in ['quad_abs','x1pol','x2pol','w1o','w1','w2o','w2','pos','Pxa','Pwa','Maa','Fta','Ffa']:
+            # datac[col] = datac[col].replace([np.inf, -np.inf], np.nan)
+            # datac[col] = datac[col].fillna(np.abs(datac[col]).max())
+            if rtype == 'max':
+                datac[col] = datac[col]/np.max(datac[col].abs())
+            else:
+                datac[col] = (datac[col]-datac[col].mean())/datac[col].std()
+
+    return datac
+
+def get_roots(inp):
+    dcply = np.polynomial.Polynomial.fit(np.arange(0,len(inp)),inp.values,deg=2)
+
+    return dcply

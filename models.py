@@ -1,60 +1,66 @@
 import numpy as np
 import pandas as pd
-from datetime import datetime as dt
+from scipy import stats
 
-def ddm(data,windows,obv=['c','v'],diff_offset=1,diff=1):
+def ddm(data,tgt=0.8):
+    x1 = f'x1'
+    x2 = f'x2'
+    dotx2 = f'd1dotx2'
+    
     data_m = data.copy()
 
-    um = 1/len(data_m)
-
     print('- Creating addtional features...\n')
+    
+    data_m['x1pol'] = np.where(data_m[x1]>0,1,np.where(data_m[x1]<0,-1,0))
+    data_m['x2pol'] = np.where(data_m[x2]>0,1,np.where(data_m[x2]<0,-1,0))
 
-    for i in range(1,len(obv)):
-        # Create power, conductivity and resistance metrics
-        # Create ideal position signal
-        data_m[f'{obv[0]}{obv[i]}_pwr'] = data_m[f'd{obv[0]}1t_o'] * data_m[f'd{obv[i]}1t_o']
-        data_m[f'{obv[0]}{obv[i]}_r'] = data_m[f'd{obv[0]}1t_o'].divide(data_m[f'd{obv[i]}1t_o'])
-        data_m[f'{obv[0]}{obv[i]}_c'] = data_m[f'd{obv[i]}1t_o'].divide(data_m[f'd{obv[0]}1t_o'])
+    data_m['quad_abs'] = np.where((data_m[x2]>0) & (data_m[x1]>0),1,np.where((data_m[x2]>0) & (data_m[x1]<0),2,np.where((data_m[x2]<0) & (data_m[x1]>0),3,4)))
+    data_m['pos'] = np.where(data_m.d1dotx2>0,1,np.where(data_m.d1dotx2<0,-1,0))
+    
+    # data_m[f'{x1}_avg_cum'] = data[x1].expanding().mean()
+    # data_m[f'{x2}_avg_cum'] = data[x2].expanding().mean()
 
-        data_m[f'idpos{obv[i]}'] = np.where(data_m[f'd{obv[i]}1t_o'] > data_m[f'd{obv[i]}1t_o'].mean()+data_m[f'd{obv[i]}1t_o'].std(),1,0)
+    # data_m[f'{x1}_med_cum'] = data[x1].expanding().median()
+    # data_m[f'{x2}_med_cum'] = data[x2].expanding().median()
 
-        data_m.fillna(0,inplace=True)
+    # data_m[f'{x1}_var_cum'] = data[x1].expanding().var()
+    # data_m[f'{x2}_var_cum'] = data[x2].expanding().var()
 
-    for o in obv:
-        data_m[f'{o}_mean'] = data_m[f'd{o}1t_o'].mean()
-        data_m[f'{o}_median'] = data_m[f'd{o}1t_o'].median()
-        data_m[f'{o}_mode'] = data_m[f'd{o}1t_o'].mode()
-        data_m[f'{o}_std'] = data_m[f'd{o}1t_o'].std()
-
-        # Remove nans and infs
-        if np.isinf(data_m[f'{obv[0]}{obv[i]}_c'].max()):
-            data_m.replace([np.inf, -np.inf], np.nan,inplace=True)
-            data_m.fillna(data_m[f'{obv[0]}{obv[i]}_c'].max(),inplace=True)
-        
-    data_m.fillna(0,inplace=True)
+    # data_m[f'{x1}_min_cum'] = data[x1].expanding().min()
+    # data_m[f'{x2}_min_cum'] = data[x2].expanding().min()
+    
+    # data_m[f'{x1}_max_cum'] = data[x1].expanding().max()
+    # data_m[f'{x2}_max_cum'] = data[x2].expanding().max()
 
     print('Data modelling complete...\n')
+
+    data_m.fillna(0,inplace=True)
     return data_m
 
-def point_sys(data,obv=['c','v'],size=3):
+def point_sys(data,obv=['v','c'],size=3,dt=1):
     data_p = data.copy()
 
-    if len(data_p) > size:
+    if len(data_p) >= size:
         print(f'\nCreating Parameter system of order:{size}...\n')
-        for o in obv:
+        for k,o in enumerate(obv,1):
             for i in range(1,size+1):
-                data_p[f'{o}{i}t_1'] = data_p[o] - data_p[o].shift(1)
-                data_p[f'd{o}{i}t_o'] = data_p[f'{o}{i}t_1']
-                data_p[f'{o}{i}rt_1'] = np.sqrt(data_p[f'{o}{i}t_1']**2 + i**2)
-                data_p[f'{o}{i}angt_1'] = np.arcsin(data_p[f'{o}{i}t_1'].divide(data_p[f'{o}{i}rt_1']))
+                diff1 = data_p[o] - data_p[o].shift(1)
+                data_p[f'x{k}'] = diff1.divide(dt)
+
                 if i > 1:
-                    data_p[f'{o}{i}to_1'] = data_p[f'd{o}{i}t_o'] - data_p[f'd{o}{i}t_o'].shift(1)
-                    data_p[f'd{o}{i}t_oo'] = data_p[f'{o}{i}to_1'].divide(i)
-                    data_p[f'd{o}{i}angt_o'] = data_p[f'{o}{i}angt_1'] - data_p[f'{o}{i}angt_1'].shift(1)
+                    diff2 = diff1 - diff1.shift(1)
+                    data_p[f'd{i-1}dotx{k}'] = diff2.divide(dt)
                 if i > 2:
-                    data_p[f'{o}{i}too_1'] = data_p[f'd{o}{i}t_oo'] - data_p[f'd{o}{i}t_oo'].shift(1)
-                    data_p[f'd{o}{i}t_ooo'] = data_p[f'{o}{i}too_1'].divide(i)
-        data_p.fillna(0,inplace=True)
+                    diff3 = diff2 - diff2.shift(1)
+                    data_p[f'd{i-1}dotx{k}'] = diff3.divide(dt)
+                if i > 3:
+                    diff4 = diff3 - diff3.shift(1)
+                    data_p[f'd{i-1}dotx{k}'] = diff4.divide(dt)
+                if i > 4:
+                    diff5 = diff4 - diff4.shift(1)
+                    data_p[f'd{i-1}dotx{k}'] = diff5.divide(dt)
 
         print('Parameters are ready...\n')
+
+    data_p.fillna(0,inplace=True)
     return data_p

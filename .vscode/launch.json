@@ -8,7 +8,21 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Tradestation",
+            "type": "python",
+            "request": "launch",
             "program": "c:\\Users\\mwill\\Coupled-Oscillator-Analyzer\\tradestation.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Test",
+            "type": "python",
+            "request": "launch",
+            "program": "c:\\Users\\mwill\\Coupled-Oscillator-Analyzer\\Test.py",
             "console": "integratedTerminal"
         }
     ]

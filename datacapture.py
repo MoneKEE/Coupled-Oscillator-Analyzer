@@ -2,7 +2,6 @@ import pandas as pd
 import cbpro
 import math as mt
 from datetime import timedelta
-from datetime import datetime as dt
 
 def get_data_span(asset,start,stop,interval,mode):
 
@@ -54,13 +53,14 @@ def get_data_span(asset,start,stop,interval,mode):
     data.rename(columns = columnlist,inplace=True)
 
     data['dt'] = pd.to_datetime(data['t'],unit='s')
-    #data['dt'] = data['dt'].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d %H:%M'))
     data.sort_values('dt', ascending=True, inplace=True)
     data.set_index(data.dt,inplace=True)
     data.drop(['t','dt'],inplace=True,axis=1)
 
     data['v']    = data['v'].round(3)
     data         = data.iloc[:data.index.get_loc(stop),:]
+    
+    # data = data.round(decimals=3)
     
     print(f'\nData acquired. Total data points:{data.shape[0]}')
     return data.drop_duplicates()

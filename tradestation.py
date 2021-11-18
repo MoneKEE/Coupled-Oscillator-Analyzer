@@ -6,11 +6,9 @@ where dP(t) = P(t) - P(t-n) and dV(t) = V(t) - V(t-n)
 
 '''
 from datetime import datetime as dt
-
-from numpy import NaN
-import frequencies as freq
 import datacapture as dc
 import pandas as pd
+import misc
 import modes
 import sys, getopt
 
@@ -22,19 +20,17 @@ warnings.filterwarnings('ignore')
 def main(argv):
     # PARAMETERS
     harms       = 9
-    sr          = 0.001
-    alpha       = 3
+    alpha       = 1
     N           = 7
-    Fs          = round(1/sr,3)
+    F          = 2
     diff_offset = 1
     diff        = 1
     m           = 1
     refresh     = 0.04
-    windows     = [24,24*7,24*30]
-    start       = dt(2018,1,1,0,0,0); stop = dt(2018,2,1,00,00,00)
+    start       = dt(2020,1,1,0,0,0); stop = dt(2021,1,1,00,00,00)
     asset       = 'ETH-USD'
-    interval    = '5minutes'
-    mode        = 'dump'
+    interval    = '15minutes'
+    mode        = 'stream_r'
     figcols     = [ 'v_sig','c_sig'
                     ,'dv1t_0','dc1t_o'
                     ,'dv2t_oo','dc2t_oo'
@@ -53,26 +49,22 @@ def main(argv):
 
 
     try:
-        opts,args = getopt.getopt(argv,'hm:f:t:i:p:s:a:w:n:',['mode=','from=','thru=','interval=','harms=','sr=','alpha=','mass=','win='])
+        opts,args = getopt.getopt(argv,'hm:f:t:i:s:w:n:r:c:',['mode=','from=','thru=','interval=','fs=','mass=','win=','ref=','chord='])
     except getopt.GetoptError:
-        print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
+        print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
         sys.exit(2)
   
     for opt, arg in opts:
         if opt == '-h':
-            print('tradestation.py -m <mode> -i <interval> -p <periods> -s <sampling rate> -a <alpha> -w <system mass> -n <window>')
+            print('tradestation.py -m <mode> -f <from> -t <thru> -i <interval> -s <sampling freq> -w <system mass> -n <window> -r <refresh> -c <chord>')
             sys.exit()
         elif opt in ('-m','mode'):
             mode = arg
         elif opt in ('-i','int'):
             interval = arg
-        elif opt in ('-p','periods'):
-            harms = int(arg)
         elif opt in ('-s', 'sr'):
-            sr = float(arg)
-            Fs = round(1/float(sr),3)
-        elif opt in ('-a','alpha'):
-            alpha = int(arg)
+            t = float(arg)
+            F = t
         elif opt in ('-w', 'mass'):
             m = float(arg)
         elif opt in ('-f', 'from'):
@@ -81,69 +73,62 @@ def main(argv):
             stop = pd.to_datetime(arg)
         elif opt in ('-n', 'win'):
             N = int(arg)
+        elif opt in ('-r', 'ref'):
+            refresh = float(arg)
+        elif opt in ('-c', 'chord'):
+            hrm = arg
 
-    comp        = freq.harmonics(harms=harms
-                                ,alpha=alpha
-                                ,type='harm_mlt'
-                                )
     df_master   = dc.get_data_span( asset=asset
                                 ,start=start
                                 ,stop=stop
                                 ,interval=interval
                                 ,mode=mode
                                 ) 
+    df_master = misc.normalizedf(df_master,'std')
 
-    params      = pd.DataFrame( [mode,harms,obv[0],obv[1],Fs,asset,interval,len(df_master)]
-                                ,index=['Mode','n Harmonics','obv1','obv2','Fs','Asset','Interval','n Points']
+    params      = pd.DataFrame( [mode,obv[0],obv[1],F,asset,interval,len(df_master)]
+                                ,index=['Mode','obv1','obv2','F','Asset','Interval','n Points']
                                 ,columns=['parameters']
                                 )
-
     print(params)
 
     if mode=='stream_e':
         ds = modes.stream_e(  data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
                             ,harms=harms
-                            ,Fs=Fs
+                            ,F=F
                             ,refresh=refresh
-                            ,figcols=figcols
+                            ,hrm=hrm
                             ,m=m
                             ,mode=mode
-                            ,windows=windows
                             ,N=N
                             )
     elif mode=='stream_r':
         ds = modes.stream_r(  data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
                             ,obv=obv
                             ,harms=harms
-                            ,Fs=Fs
+                            ,F=F
                             ,refresh=refresh
-                            ,figcols=figcols
+                            ,hrm=hrm
                             ,m=m
                             ,mode=mode
-                            ,windows=windows
                             ,N=N
                             )
     # Run dump
     else:
         dd = modes.dump( data=df_master
-                            ,comp=comp
                             ,diff_offset=diff_offset
                             ,diff=diff
-                            ,Fs=Fs
-                            ,windows=windows
+                            ,F=F
                             ,refresh=refresh
+                            ,hrm=hrm
                             ,m=m
                             ,obv=obv
-                            ,figcols=figcols
                             )
-
 
 if __name__ == '__main__':
     main(sys.argv[1:]) 
